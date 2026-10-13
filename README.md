@@ -1,88 +1,139 @@
-# Punto
+<p align="center">
+  <img src="assets/brand/Punto.png" width="96" alt="Icona di Punto">
+</p>
 
-App macOS nativa: SwiftUI per le impostazioni, C per HID e generazione eventi, Objective-C/AppKit per il ciclo di vita, i selettori e la registrazione shortcut. Non richiede Xcode completo, solo i Command Line Tools con Swift e l’SDK macOS. Compatibile con macOS 12 o successivo.
+<h1 align="center">Punto</h1>
+
+<p align="center">
+  Il tuo Mac, dal controller.<br>
+  Mouse, shortcut e app launcher per il DualSense della PS5.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/macOS-12%2B-202024?logo=apple&amp;logoColor=white" alt="macOS 12 o successivo">
+  <img src="https://img.shields.io/badge/UI-SwiftUI-F05259" alt="Interfaccia SwiftUI">
+  <img src="https://img.shields.io/badge/Input-C-555555" alt="Input in C">
+  <img src="https://img.shields.io/badge/status-in%20sviluppo-F05259" alt="In sviluppo">
+</p>
+
+<p align="center">
+  <a href="#cosa-fa">Funzioni</a> ·
+  <a href="#screenshot">Screenshot</a> ·
+  <a href="#avvio">Avvio</a> ·
+  <a href="docs/DEVELOPMENT.md">Sviluppo</a>
+</p>
+
+---
+
+## Cosa fa
+
+| | Funzione |
+| :--- | :--- |
+| **Mouse** | Muovi il cursore con il joystick destro o il touchpad. |
+| **Scroll** | Tieni premuto R1 e usa il joystick destro. Sensibilità regolabile. |
+| **Shortcut** | Registra la tua combinazione, anche solo modificatori come ⌥⇧. |
+| **Push-to-talk** | La combinazione resta premuta finché tieni premuto il pulsante. |
+| **Pressione lunga** | Assegna una seconda shortcut allo stesso pulsante. |
+| **Launcher** | Quattro direzioni, fino a due app per direzione. Apertura immediata. |
+
+Interfaccia **nativa SwiftUI**, temi scuro/chiaro/sistema e preferenze salvate automaticamente. Nessun server, account o servizio web richiesto dall’app.
+
+## Screenshot
+
+### Un launcher come un HUD
+
+Premi una freccia: l’app si apre subito e l’overlay mostra la selezione. Ripremi la stessa freccia mentre è visibile per passare alla seconda app. Il feedback scompare dopo **1,2 secondi**: nessun pulsante di conferma.
+
+<p align="center">
+  <img src="docs/screenshots/launcher-overlay.png" width="640" alt="Overlay compatto di Punto: due applicazioni per ciascuna delle quattro direzioni">
+</p>
+
+<p align="center"><sub>Overlay reale con applicazioni dimostrative. Nessuna app viene preconfigurata all’installazione.</sub></p>
+
+### Ogni pulsante, la tua azione
+
+Shortcut registrate, applicazioni da richiamare e una colonna separata per la pressione lunga.
+
+<p align="center">
+  <img src="docs/screenshots/buttons.png" width="960" alt="Configurazione dei pulsanti: azione principale e shortcut per la pressione lunga">
+</p>
+
+<details>
+<summary><strong>Mouse e configurazione del launcher</strong></summary>
+
+### Mouse e scroll
+
+Velocità del cursore, zona morta e sensibilità dello scroll sono configurabili. Lo scroll è indipendente dalla velocità del mouse.
+
+<img src="docs/screenshots/mouse.png" width="960" alt="Impostazioni mouse con slider dedicato alla sensibilità dello scroll">
+
+### Le tue app nelle quattro direzioni
+
+Scegli fino a **otto applicazioni**, distribuite tra su, destra, giù e sinistra.
+
+<img src="docs/screenshots/launcher-settings.png" width="960" alt="Configurazione del launcher direzionale con due slot applicazione per direzione">
+
+</details>
+
+## Controlli
+
+| Controller | Azione |
+| :--- | :--- |
+| Joystick destro | Muove il cursore |
+| Touchpad | Muove il cursore con un dito |
+| **R1 + joystick destro** | Scroll verticale e orizzontale |
+| **R2** | Click sinistro; mantieni premuto per trascinare |
+| **L2** | Click destro; mantieni premuto per trascinare |
+| **↑ → ↓ ←** | Aprono l’app nella direzione; ripremi per la seconda |
+| **○ nell’overlay** | Chiude il feedback visivo |
+| **Options** | Attiva o sospende il controllo |
+| Altri pulsanti | Shortcut o applicazioni personalizzabili |
+
+> **Pressione lunga:** senza Hold, la shortcut parte subito e resta premuta fino al rilascio. Con Hold, un tap esegue l’azione principale al rilascio; dopo **0,45 s** si attiva solo la shortcut lunga.
 
 ## Avvio
 
+### Requisiti
+
+- **macOS 12+** e DualSense standard, via USB o Bluetooth.
+- **Command Line Tools di Apple** con Swift e SDK macOS. Xcode completo non serve.
+- Un certificato locale per la firma: vedi [configurazione della build](docs/DEVELOPMENT.md#firma-locale).
+
+### Compila e apri
+
 ```sh
+git clone git@github.com:guglielmobartelloni/Punto.git
+cd Punto
 make
 open build/PadMac.app
 ```
 
-Collega un DualSense standard tramite USB o Bluetooth (tieni premuti PS + Create fino al lampeggio e abbinalo nelle impostazioni Bluetooth). Apri Punto, seleziona «Permessi» nella sidebar, premi «Apri impostazioni Accessibilità» e autorizza Punto. Se macOS lo richiede, autorizza anche Monitoraggio input e riavvia l'app.
+La repository è privata: serve un account GitHub autorizzato per clonarla.
 
-- Joystick destro: cursore, con velocità e zona morta regolabili.
-- R1 mantenuto premuto + joystick destro: scroll verticale e orizzontale, senza spostare il cursore. Rilascia R1 per tornare al mouse. Lo scroll è continuo, con accelerazione progressiva e la stessa zona morta del cursore; sensibilità personalizzabile in «Mouse → Scroll con R1 → Sensibilità scroll», da 100 a 3000 pixel/s (valore iniziale 900). La preferenza viene salvata automaticamente ed è indipendente dalla velocità del cursore.
-- Touchpad DualSense: movimento relativo con un dito; solleva il dito per riposizionarlo senza spostare il cursore. Sensibilità iniziale fissa a 0,8 punti per unità del sensore. Sono decodificati i report USB 0x01 e Bluetooth completi 0x31; i report Bluetooth semplificati non contengono il touchpad.
-- R2: click sinistro; L2: click destro. Mantieni premuto per trascinare. L1 non è assegnato; R1 è riservato al modificatore scroll.
-- Pulsanti (escluse frecce, R1 e Options): azione selezionabile nelle impostazioni, incluse «Registra shortcut…», nessuna azione e «Apri applicazione…». Scegli un bundle .app dal Finder: viene avviato o richiamato in primo piano se già aperto. Le assegnazioni sono persistenti. PS/Mute dipendono dagli eventi resi disponibili da macOS e dal firmware.
-- R2 e L2 mantengono il click come azione predefinita, ma possono essere riassegnati. Options rimane riservato alla sospensione per sicurezza.
-- Cambiare un’assegnazione sospende il controllo e rilascia gli eventuali click mantenuti: premi «Attiva» al termine.
-- Il menu nella colonna «Pressione lunga» accanto a ogni pulsante configura una seconda shortcut per la pressione lunga (0,45 secondi). La combinazione lunga resta premuta fino al rilascio; l’azione breve non viene eseguita. Se rilasci prima della soglia, l’azione principale viene eseguita come un tap al rilascio. Senza assegnazione Hold, il comportamento immediato precedente resta invariato, incluso push-to-talk. Il menu «Pressione lunga» permette di registrare nuovamente o rimuovere l’assegnazione. Options resta riservato. Assegnare Hold a R2/L2 sostituisce il normale trascinamento con distinzione tap/pressione lunga.
-- Frecce del D-pad: aprono il Launcher e selezionano una delle due app configurate nella direzione premuta.
-- Options: attiva o sospende il controllo e chiude l’eventuale Launcher.
-- Menu 🎮: impostazioni, attiva/sospendi, esci.
+### Prima configurazione
 
-R1 è ora riservato allo scroll: le sue precedenti assegnazioni sono conservate nelle preferenze ma non eseguite. Il touchpad continua a muovere il cursore anche quando R1 è premuto. Sospensione, disconnessione, modifica delle assegnazioni e apertura del Launcher annullano la modalità scroll.
+1. Collega il controller. Per Bluetooth, tieni premuti **PS + Create** fino al lampeggio e abbinalo nelle impostazioni di macOS.
+2. In Punto, apri **Permessi → Apri impostazioni Accessibilità** e autorizza l’app. Concedi anche **Monitoraggio input** se richiesto da macOS.
+3. Configura **Pulsanti**, **Launcher** e **Mouse**, poi premi **Attiva**.
 
-Il controllo parte sempre sospeso e si disattiva alla disconnessione. Le preferenze vengono salvate tramite NSUserDefaults.
+Punto parte sempre sospeso. Chiudere le impostazioni lo lascia nella barra dei menu; il Dock compare solo mentre la configurazione è aperta.
 
-Il nome visualizzato è **Punto**, con icona personalizzata. Il progetto rimane in `Projects/PadMac` e il bundle in `build/PadMac.app`: percorso, eseguibile `PadMac`, identificativo `local.padmac.controller` e certificato di firma originali vengono mantenuti per preservare preferenze e autorizzazioni. Le vecchie voci di Accessibilità possono ancora apparire come PadMac. Nessun certificato o chiave privata è incluso nel repository.
+## Da sapere
 
-## Interfaccia SwiftUI
+- È una versione **in sviluppo**, non ancora distribuita con firma Developer ID e notarizzazione.
+- Sono supportati **un controller alla volta** e il DualSense standard, non il DualSense Edge.
+- R1, Options e le frecce hanno ruoli riservati. Gli altri pulsanti restano personalizzabili.
+- Alcune combinazioni riservate da macOS potrebbero non essere registrabili o riproducibili.
+- Il bundle si chiama ancora `PadMac.app` per conservare percorso, identità di firma, permessi e preferenze. Il nome visualizzato è **Punto**.
 
-La finestra apre direttamente «Pulsanti», senza Panoramica: elenco compatto con colonne per azione principale e pressione lunga, ricerca per nome/app/shortcut e filtro per gruppo. La sidebar contiene Pulsanti, Launcher, Mouse e Permessi. Il tema predefinito è scuro; il menu «Tema» permette di selezionare Chiaro o Sistema. La scelta viene salvata. L’interfaccia aggiorna connessione, permesso e stato del controllo in tempo reale, preservando tutte le preferenze delle versioni precedenti.
-
-`UIController.h` definisce il contratto tra SwiftUI (`UI.swift`) e il runtime Objective-C (`main.m`). Le modifiche alle assegnazioni sospendono il controllo prima di aprire il selettore o il registratore. Il bundle e il requisito di firma restano invariati. Quando la configurazione è aperta, Punto compare nel Dock e in ⌘Tab; alla chiusura della finestra torna nella sola barra dei menu, senza interrompere il controllo. Il click sull’icona nel Dock riporta la configurazione in primo piano.
-
-## Launcher direzionale
-
-Configura le app nella sezione «Launcher»: due slot per ciascuna direzione (su, destra, giù, sinistra), per un massimo di otto app. I percorsi vengono salvati automaticamente. Le eventuali app già assegnate alle frecce nelle versioni precedenti vengono migrate nel primo slot; shortcut e Hold precedenti restano conservati ma le frecce sono ora riservate al Launcher.
-
-Con il controllo attivo:
-
-1. Premi una freccia: si apre/richiama subito la prima app disponibile in quella direzione. L’overlay mostra quale app è stata selezionata.
-2. Ripremi la stessa freccia mentre l’overlay è visibile per passare alla seconda app e aprirla automaticamente. Gli slot vuoti vengono saltati; una nuova direzione seleziona e apre la prima app disponibile.
-3. Non serve ✕. L’overlay scompare 1,2 secondi dopo l’ultima freccia; dopo la chiusura una nuova pressione riparte dalla prima app. Uno slot vuoto non apre nulla.
-4. ○ chiude anticipatamente il feedback visivo (non annulla un’apertura già avvenuta). Options sospende il controllo e chiude l’overlay.
-
-L’apertura avviene direttamente alla pressione della freccia, non al rilascio e non dopo una conferma. Mantenere premuta una freccia non ripete la navigazione: occorre rilasciarla e ripremerla. Mentre l’overlay è aperto, gli altri pulsanti vengono consumati e joystick/touchpad non muovono il mouse. All’apertura vengono rilasciate eventuali shortcut/click mantenuti e cancellate le pressioni lunghe in attesa. Alla chiusura si ripristina il controllo normale.
-
-L’overlay è compatto (massimo 560 × 400 punti), con icone da 28 punti e due slot per direzione. È un pannello non attivante: non ruba il focus alla finestra in uso, non porta la configurazione in primo piano e da solo non aggiunge l’app al Dock. Non usa asset di videogiochi. `LauncherUI.swift` contiene la vista e `launcher.c` la macchina a stati di selezione.
-
-## Limiti attuali
-
-Il filtro HID riconosce il DualSense standard Sony (054c:0ce6), non il DualSense Edge. Mapping HID e comportamento USB/Bluetooth devono essere verificati con un controller reale. È gestito un controller alla volta. Le shortcut si registrano premendo la combinazione nella finestra «Registra shortcut…» e cliccando «Salva». Sono supportati tasti singoli e combinazioni con Command, Control, Option, Shift e Fn, comprese frecce, Escape e tasti funzione. Annulla e Salva si usano con il mouse, così Invio ed Escape sono registrabili. Le shortcut sono un singolo tasto con modificatori oppure una combinazione di soli modificatori (es. Option + Shift), non macro/sequenze. Per registrare soli modificatori, premili insieme, rilasciali e clicca Salva: il rilascio conserva la combinazione completa. I soli modificatori vengono riprodotti come eventi flagsChanged: la pressione resta attiva per tutta la durata della pressione del pulsante del controller, e il rilascio avviene soltanto quando lo lasci. Lo stesso vale per le shortcut con un tasto normale. È quindi possibile usare push-to-talk con Option + Shift. Le app, invece, vengono aperte una sola volta alla pressione. Sospensione, cambio assegnazione, perdita del permesso Accessibilità, disconnessione e uscita normale rilasciano tutti i tasti sintetici mantenuti. Le combinazioni condivise da più pulsanti usano conteggi di riferimento per evitare rilasci anticipati. Alcune combinazioni intercettate direttamente da macOS (per esempio shortcut globali o tasti multimediali) potrebbero non arrivare alla finestra o non essere riproducibili tramite CGEvent. I keycode sono fisici: cambiando layout di tastiera può cambiare il carattere prodotto. Le vecchie assegnazioni vengono migrate senza rimuovere le app configurate; le nuove installazioni non hanno shortcut preimpostate. Le app sono salvate per percorso: se vengono spostate o rimosse, occorre selezionarle nuovamente. Non sono inclusi profili per applicazione, avvio automatico, firma Developer ID o notarizzazione. La compilazione usa il certificato «PadMac Local Development» nel Portachiavi login, con un requisito di firma stabile legato al certificato e all’identificativo dell’app. Al passaggio dalla precedente firma ad-hoc è necessario concedere nuovamente Accessibilità. Le compilazioni successive mantengono la stessa identità: non eliminare il certificato o la relativa chiave privata dal Portachiavi. Il certificato è locale, non è una firma Developer ID e non consente la notarizzazione. Su un altro Mac occorre configurare un nuovo certificato e aggiornare il requisito nel Makefile.
-
-La lettura controller usa IOKit/HID non esclusivo. Se si avvia un gioco, sospendere Punto per evitare input simultanei. Non è necessario autorizzare Terminale per l'avvio del bundle tramite `open`.
-
-## Verifica manuale
-
-1. Verificare connessione e disconnessione USB e Bluetooth.
-2. Concedere Accessibilità e attivare il controllo.
-3. Verificare direzioni del joystick, assenza di deriva e limiti del cursore. Provare il touchpad via USB e Bluetooth: movimento nelle quattro direzioni, sollevamento/riposizionamento del dito, trascinamento con R2, sospensione tramite Options.
-4. Provare click sinistro con R2, destro con L2 e trascinamento con ciascun grilletto; verificare il rilascio anche premendoli entrambi. Tenere R1 e muovere il joystick destro nelle quattro direzioni: verificare scroll senza spostamento del cursore, ritorno al mouse al rilascio e stop alla sospensione/apertura del Launcher.
-5. Provare shortcut in un documento non importante.
-6. Verificare sospensione tramite Options, disconnessione durante un trascinamento e persistenza delle preferenze.
-7. Assegnare un’app innocua a un pulsante e due app per direzione nel Launcher. Riattivare il controllo: verificare apertura alla prima freccia, cambio slot alla seconda, apertura immediata al cambio direzione e chiusura automatica dopo 1,2 s. ○ chiude il feedback; ✕ non conferma né riapre l’app. Verificare che le shortcut normali di ✕/○ non vengano eseguite nell’overlay.
-8. Chiudere e riaprire Punto: verificare che le assegnazioni siano conservate. Provare annullamento del selettore app e ritorno al click predefinito su R2/L2.
-9. Registrare una combinazione personalizzata (es. ⇧⌘S), un tasto singolo, Escape e una freccia; salvare e verificare l’esecuzione con il controller in un documento non importante. Verificare annullamento, nuova registrazione sulla stessa assegnazione e persistenza al riavvio.
-10. Assegnare una shortcut Hold diversa dalla principale: verificare tap rapido (solo principale) e pressione oltre 0,45 s (solo Hold, mantenuta fino al rilascio). Provare Options e disconnessione sia prima sia dopo la soglia. Rimuovere Hold e verificare il ritorno al push-to-talk immediato.
-
-## Test automatici
-
-`make test` verifica il dispatch dei 19 slot, l’assenza di ripetizioni su pressione mantenuta, la sospensione e la riserva di Options. Verifica inoltre acquisizione di combinazioni arbitrarie, tasti speciali, filtri sui modificatori e migrazione delle preferenze, nonché mantenimento e rilascio delle shortcut, combinazioni condivise e rilascio di sicurezza alla sospensione/disconnessione/uscita. Verifica anche distinzione tra tap e pressione lunga, soglia, pressioni simultanee e cancellazione delle azioni in attesa. Non sostituisce il test fisico del mapping HID, della finestra di registrazione, della riproduzione delle shortcut o dell’apertura delle app.
-
-`make test` verifica anche scroll R1, sensibilità regolabile e limiti, direzioni verticale/orizzontale, accumulo delle frazioni, zona morta, ritorno al cursore e reset di sicurezza. Include inoltre la selezione direzionale, il ciclo tra due app, gli slot vuoti e il reset del Launcher. `make test-launcher-ui` verifica apertura automatica alla selezione, routing dei pulsanti, chiusura manuale, pulizia alla sospensione e assenza di attivazione del Dock. Usa preferenze volatili isolate e intercetta l’apertura delle app: non modifica le assegnazioni e non avvia app reali. Salva una preview dell’overlay in `build/ui-launcher.png`.
-
-`make test-dock` è un test nativo opzionale che apre e chiude una finestra di prova: verifica il cambio della activation policy, la riapertura e che chiudere le impostazioni non sospenda il controllo. Richiede una sessione grafica macOS.
-
-## Verifica visiva locale
-
-L’app supporta un’opzione di sviluppo che salva solo il contenuto della propria finestra, senza catturare il desktop:
+## Sviluppo
 
 ```sh
-open build/PadMac.app --args --ui-page buttons --ui-dark --ui-preview "$PWD/build/ui-buttons-dark.png"
+make test                 # Input, shortcut, scroll e selezione direzionale
+make test-dock            # Ciclo di vita della finestra e del Dock
+make test-launcher-ui     # Overlay, routing e preview con app dimostrative
 ```
 
-L’app deve essere chiusa prima dell’avvio con questi argomenti. Le pagine disponibili sono `buttons`, `launcher`, `mouse`, `permissions`; `--ui-group Dorsali` permette di controllare i gruppi in fondo all’elenco. Per una preview chiara, omettere `--ui-dark`. Queste opzioni non cambiano le assegnazioni e non vengono usate nell’avvio normale.
+I due test UI richiedono una sessione grafica macOS. Non avviano le app dimostrative e non modificano le assegnazioni del launcher.
+
+→ [Architettura, firma locale e verifiche manuali](docs/DEVELOPMENT.md)
