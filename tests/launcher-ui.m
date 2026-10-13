@@ -26,7 +26,8 @@ int main(void){@autoreleasepool{
     [defaults setVolatileDomain:@{@"launcherApps0":up,@"launcherApps1":right,@"launcherApps2":down,@"launcherApps3":left,@"action1":@11,@"app1":@"normal-cross-action",@"action2":@11,@"app2":@"normal-circle-action"} forName:NSArgumentDomain];
     LauncherTestApp *delegate=[LauncherTestApp new];application.delegate=delegate;currentApp=delegate;
     delegate.speed=1100;delegate.deadzone=0.12;input_button_handler(handle_button);input_enable(true);
-    assert([delegate handleButton:15 pressed:YES]);
+    assert([delegate handleButton:5 pressed:YES]);assert(input_scroll_active());
+    assert([delegate handleButton:15 pressed:YES]);assert(!input_scroll_active());
     assert([[delegate settingsSnapshot][@"launcherVisible"] boolValue]);
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
     assert([delegate.launchedPath isEqualToString:up[0]]); // Immediate automatic launch.

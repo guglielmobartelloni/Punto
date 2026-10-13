@@ -14,6 +14,13 @@ static void move_pointer(double dx, double dy);
 static bool pointerSuppressed;
 void input_suppress_pointer(bool suppressed){pointerSuppressed=suppressed;touching=false;}
 static bool enabled, held[2]; // Left mouse (R2), right mouse (L2).
+static bool scrollMode;
+static double scrollRemainderX,scrollRemainderY;
+void input_scroll_mode(bool on){
+    on=on&&enabled;
+    if(scrollMode!=on){scrollMode=on;scrollRemainderX=scrollRemainderY=0;}
+}
+bool input_scroll_active(void){return enabled&&scrollMode&&!pointerSuppressed;}
 static bool buttons[19];
 static InputButtonHandler buttonHandler;
 void input_button_handler(InputButtonHandler handler){buttonHandler=handler;}
@@ -28,6 +35,7 @@ static void mouse(CGEventType type, CGMouseButton button) {
     if(e){CGEventPost(kCGHIDEventTap,e);CFRelease(e);}
 }
 void input_release_actions(void) {
+    input_scroll_mode(false);
     keyboard_release_all();
     if(buttonHandler)buttonHandler(-1,false);
     if(held[0]) mouse(kCGEventLeftMouseUp,kCGMouseButtonLeft);
@@ -145,13 +153,33 @@ void input_start(void){
     IOHIDManagerOpen(manager,kIOHIDOptionsTypeNone);
 }
 void input_tick(double dt,double speed,double dz){
-    if(!enabled||!active)return;
-    double r=hypot(x,y);if(r<=dz)return;
+    if(!enabled||!active||pointerSuppressed)return;
+    double r=hypot(x,y);if(r<=dz){scrollRemainderX=scrollRemainderY=0;return;}
     double magnitude=fmin(1,(r-dz)/(1-dz));magnitude*=magnitude;
-    move_pointer(x/r*magnitude*speed*dt,y/r*magnitude*speed*dt);
+    if(scrollMode){
+        // Core Graphics positive scroll deltas move up/left. Preserve sub-pixel
+        // remainders for smooth slow scrolling at the 120 Hz input tick rate.
+        scrollRemainderX-=x/r*magnitude*900*dt;
+        scrollRemainderY-=y/r*magnitude*900*dt;
+        int horizontal=(int)trunc(scrollRemainderX),vertical=(int)trunc(scrollRemainderY);
+        scrollRemainderX-=horizontal;scrollRemainderY-=vertical;
+        if(vertical||horizontal){
+#ifdef PADMAC_INPUT_TEST
+            extern void input_test_scroll(int,int);
+            input_test_scroll(vertical,horizontal);
+#else
+            CGEventRef event=CGEventCreateScrollWheelEvent(NULL,kCGScrollEventUnitPixel,2,vertical,horizontal);
+            if(event){CGEventSetIntegerValueField(event,kCGScrollWheelEventIsContinuous,1);CGEventPost(kCGHIDEventTap,event);CFRelease(event);}
+#endif
+        }
+    }else move_pointer(x/r*magnitude*speed*dt,y/r*magnitude*speed*dt);
 }
 static void move_pointer(double dx,double dy){
     if(!enabled || !active || pointerSuppressed)return;
+#ifdef PADMAC_INPUT_TEST
+    extern void input_test_pointer(double,double);
+    input_test_pointer(dx,dy);
+#else
     CGPoint p=position();p.x+=dx;p.y+=dy;
     // Clamp to the union of active displays, including monitors with negative coordinates.
     CGDirectDisplayID displays[32];uint32_t count=0;CGRect bounds=CGRectNull;
@@ -161,6 +189,7 @@ static void move_pointer(double dx,double dy){
     CGEventType type=held[0]?kCGEventLeftMouseDragged:held[1]?kCGEventRightMouseDragged:kCGEventMouseMoved;
     CGEventRef e=CGEventCreateMouseEvent(NULL,type,p,held[0]?kCGMouseButtonLeft:held[1]?kCGMouseButtonRight:kCGMouseButtonLeft);
     if(e){CGEventPost(kCGHIDEventTap,e);CFRelease(e);}
+#endif
 }
 bool input_connected(void){return active!=NULL;}
 bool input_enabled(void){return enabled;}

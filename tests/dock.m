@@ -13,6 +13,8 @@ int main(void){@autoreleasepool{
     assert(application.activationPolicy==NSApplicationActivationPolicyRegular);
     assert(delegate.window.isVisible);
     input_enable(true);
+    assert([delegate handleButton:5 pressed:YES]);assert(input_scroll_active());
+    assert([delegate handleButton:5 pressed:NO]);assert(!input_scroll_active());
     [delegate.window performClose:nil];
     assert(application.activationPolicy==NSApplicationActivationPolicyAccessory);
     assert(!delegate.window.isVisible);

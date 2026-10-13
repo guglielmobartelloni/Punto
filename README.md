@@ -12,15 +12,18 @@ open build/PadMac.app
 Collega un DualSense standard tramite USB o Bluetooth (tieni premuti PS + Create fino al lampeggio e abbinalo nelle impostazioni Bluetooth). Apri Punto, seleziona «Permessi» nella sidebar, premi «Apri impostazioni Accessibilità» e autorizza Punto. Se macOS lo richiede, autorizza anche Monitoraggio input e riavvia l'app.
 
 - Joystick destro: cursore, con velocità e zona morta regolabili.
+- R1 mantenuto premuto + joystick destro: scroll verticale e orizzontale, senza spostare il cursore. Rilascia R1 per tornare al mouse. Lo scroll è continuo, con accelerazione progressiva e la stessa zona morta del cursore; velocità massima iniziale 900 pixel/s.
 - Touchpad DualSense: movimento relativo con un dito; solleva il dito per riposizionarlo senza spostare il cursore. Sensibilità iniziale fissa a 0,8 punti per unità del sensore. Sono decodificati i report USB 0x01 e Bluetooth completi 0x31; i report Bluetooth semplificati non contengono il touchpad.
-- R2: click sinistro; L2: click destro. Mantieni premuto per trascinare. L1 e R1 non sono assegnati.
-- Pulsanti (escluse frecce e Options): azione selezionabile nelle impostazioni, incluse «Registra shortcut…», nessuna azione e «Apri applicazione…». Scegli un bundle .app dal Finder: viene avviato o richiamato in primo piano se già aperto. Le assegnazioni sono persistenti. PS/Mute dipendono dagli eventi resi disponibili da macOS e dal firmware.
+- R2: click sinistro; L2: click destro. Mantieni premuto per trascinare. L1 non è assegnato; R1 è riservato al modificatore scroll.
+- Pulsanti (escluse frecce, R1 e Options): azione selezionabile nelle impostazioni, incluse «Registra shortcut…», nessuna azione e «Apri applicazione…». Scegli un bundle .app dal Finder: viene avviato o richiamato in primo piano se già aperto. Le assegnazioni sono persistenti. PS/Mute dipendono dagli eventi resi disponibili da macOS e dal firmware.
 - R2 e L2 mantengono il click come azione predefinita, ma possono essere riassegnati. Options rimane riservato alla sospensione per sicurezza.
 - Cambiare un’assegnazione sospende il controllo e rilascia gli eventuali click mantenuti: premi «Attiva» al termine.
 - Il menu nella colonna «Pressione lunga» accanto a ogni pulsante configura una seconda shortcut per la pressione lunga (0,45 secondi). La combinazione lunga resta premuta fino al rilascio; l’azione breve non viene eseguita. Se rilasci prima della soglia, l’azione principale viene eseguita come un tap al rilascio. Senza assegnazione Hold, il comportamento immediato precedente resta invariato, incluso push-to-talk. Il menu «Pressione lunga» permette di registrare nuovamente o rimuovere l’assegnazione. Options resta riservato. Assegnare Hold a R2/L2 sostituisce il normale trascinamento con distinzione tap/pressione lunga.
 - Frecce del D-pad: aprono il Launcher e selezionano una delle due app configurate nella direzione premuta.
 - Options: attiva o sospende il controllo e chiude l’eventuale Launcher.
 - Menu 🎮: impostazioni, attiva/sospendi, esci.
+
+R1 è ora riservato allo scroll: le sue precedenti assegnazioni sono conservate nelle preferenze ma non eseguite. Il touchpad continua a muovere il cursore anche quando R1 è premuto. Sospensione, disconnessione, modifica delle assegnazioni e apertura del Launcher annullano la modalità scroll.
 
 Il controllo parte sempre sospeso e si disattiva alla disconnessione. Le preferenze vengono salvate tramite NSUserDefaults.
 
@@ -58,7 +61,7 @@ La lettura controller usa IOKit/HID non esclusivo. Se si avvia un gioco, sospend
 1. Verificare connessione e disconnessione USB e Bluetooth.
 2. Concedere Accessibilità e attivare il controllo.
 3. Verificare direzioni del joystick, assenza di deriva e limiti del cursore. Provare il touchpad via USB e Bluetooth: movimento nelle quattro direzioni, sollevamento/riposizionamento del dito, trascinamento con R2, sospensione tramite Options.
-4. Provare click sinistro con R2, destro con L2 e trascinamento con ciascun grilletto; verificare il rilascio anche premendoli entrambi.
+4. Provare click sinistro con R2, destro con L2 e trascinamento con ciascun grilletto; verificare il rilascio anche premendoli entrambi. Tenere R1 e muovere il joystick destro nelle quattro direzioni: verificare scroll senza spostamento del cursore, ritorno al mouse al rilascio e stop alla sospensione/apertura del Launcher.
 5. Provare shortcut in un documento non importante.
 6. Verificare sospensione tramite Options, disconnessione durante un trascinamento e persistenza delle preferenze.
 7. Assegnare un’app innocua a un pulsante e due app per direzione nel Launcher. Riattivare il controllo: verificare apertura alla prima freccia, cambio slot alla seconda, apertura immediata al cambio direzione e chiusura automatica dopo 1,2 s. ○ chiude il feedback; ✕ non conferma né riapre l’app. Verificare che le shortcut normali di ✕/○ non vengano eseguite nell’overlay.
@@ -70,7 +73,7 @@ La lettura controller usa IOKit/HID non esclusivo. Se si avvia un gioco, sospend
 
 `make test` verifica il dispatch dei 19 slot, l’assenza di ripetizioni su pressione mantenuta, la sospensione e la riserva di Options. Verifica inoltre acquisizione di combinazioni arbitrarie, tasti speciali, filtri sui modificatori e migrazione delle preferenze, nonché mantenimento e rilascio delle shortcut, combinazioni condivise e rilascio di sicurezza alla sospensione/disconnessione/uscita. Verifica anche distinzione tra tap e pressione lunga, soglia, pressioni simultanee e cancellazione delle azioni in attesa. Non sostituisce il test fisico del mapping HID, della finestra di registrazione, della riproduzione delle shortcut o dell’apertura delle app.
 
-`make test` include anche la selezione direzionale, il ciclo tra due app, gli slot vuoti e il reset del Launcher. `make test-launcher-ui` verifica apertura automatica alla selezione, routing dei pulsanti, chiusura manuale, pulizia alla sospensione e assenza di attivazione del Dock. Usa preferenze volatili isolate e intercetta l’apertura delle app: non modifica le assegnazioni e non avvia app reali. Salva una preview dell’overlay in `build/ui-launcher.png`.
+`make test` verifica anche scroll R1, direzioni verticale/orizzontale, accumulo delle frazioni, zona morta, ritorno al cursore e reset di sicurezza. Include inoltre la selezione direzionale, il ciclo tra due app, gli slot vuoti e il reset del Launcher. `make test-launcher-ui` verifica apertura automatica alla selezione, routing dei pulsanti, chiusura manuale, pulizia alla sospensione e assenza di attivazione del Dock. Usa preferenze volatili isolate e intercetta l’apertura delle app: non modifica le assegnazioni e non avvia app reali. Salva una preview dell’overlay in `build/ui-launcher.png`.
 
 `make test-dock` è un test nativo opzionale che apre e chiude una finestra di prova: verifica il cambio della activation policy, la riapertura e che chiudere le impostazioni non sospenda il controllo. Richiede una sessione grafica macOS.
 

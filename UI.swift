@@ -332,7 +332,18 @@ private struct SettingsView: View {
             (search.isEmpty || "\(setting.name) \(setting.primary) \(setting.hold ?? "")".localizedCaseInsensitiveContains(search))
         }
     }
-    private func buttonRow(_ setting: ButtonSetting) -> some View {
+    @ViewBuilder private func buttonRow(_ setting: ButtonSetting) -> some View {
+        if setting.id == 5 {
+            HStack(spacing: 12) {
+                HStack(spacing: 9) {
+                    Text("R1").font(.system(size: 11, weight: .medium)).foregroundColor(.secondary)
+                        .frame(width: 28, height: 28).background(Color.primary.opacity(0.035)).cornerRadius(6)
+                    Text(setting.name).font(.system(size: 11, weight: .medium))
+                }.frame(width: 180, alignment: .leading)
+                Label("Joystick destro → scroll", systemImage: "arrow.up.arrow.down").font(.system(size: 11)).frame(maxWidth: .infinity, alignment: .leading)
+                Text("Mantieni premuto R1").font(.system(size: 11)).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .leading)
+            }.padding(.horizontal, 14).padding(.vertical, 11)
+        } else {
         HStack(spacing: 12) {
             HStack(spacing: 9) {
                 Text(setting.glyph).font(.system(size: setting.id < 4 ? 22 : 11, weight: .medium, design: .rounded))
@@ -375,6 +386,7 @@ private struct SettingsView: View {
                 .frame(maxWidth: .infinity).help("Registra o rimuovi la shortcut per la pressione lunga")
         }.padding(.horizontal, 14).padding(.vertical, 10)
             .help(setting.id == 12 || setting.id == 14 ? "La disponibilità di questo pulsante dipende da macOS e dal firmware." : setting.name)
+        }
     }
     private var launcherSettings: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -427,6 +439,13 @@ private struct SettingsView: View {
                     Slider(value: Binding(get: { model.deadzone }, set: model.setDeadzone), in: 0.03...0.4)
                 }
             }.padding(20).card(radius: 8)
+            heading("Scroll con R1", detail: "Mantieni premuto R1: il joystick destro scorre in verticale e orizzontale senza muovere il cursore.")
+            HStack(spacing: 12) {
+                Image(systemName: "arrow.up.arrow.down").foregroundColor(.secondary)
+                Text("Rilascia R1 per tornare al mouse. La zona morta si applica anche allo scroll.")
+                    .font(.system(size: 11)).foregroundColor(.secondary)
+                Spacer()
+            }.padding(18).card(radius: 8)
             heading("Touchpad", detail: "Scorri un dito per muovere il mouse. Sollevalo per riposizionarlo.")
             HStack {
                 Text("Sensibilità").font(.system(size: 12))

@@ -65,6 +65,8 @@ test:
 	./build/test-longpress
 	$(CC) $(CFLAGS) tests/launcher.c launcher.c -o build/test-launcher
 	./build/test-launcher
+	$(CC) $(CFLAGS) tests/scroll.c keyboard.c -framework ApplicationServices -framework IOKit -o build/test-scroll
+	./build/test-scroll
 
 test-dock: build/UI.o build/ShortcutRecorder.o build/input.o build/keyboard.o build/longpress.o build/launcher.o
 	$(CC) $(CFLAGS) -fobjc-arc -c tests/dock.m -o build/test-dock.o

@@ -32,7 +32,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 - (NSString *)pathKey:(NSInteger)index {return [NSString stringWithFormat:@"app%ld",(long)index];}
 - (NSString *)shortcutKey:(NSInteger)index {return [NSString stringWithFormat:@"shortcut%ld",(long)index];}
 - (NSString *)holdKey:(NSInteger)index {return [NSString stringWithFormat:@"holdShortcut%ld",(long)index];}
-- (BOOL)validButton:(NSInteger)index {return index>=0&&index<19&&index!=9;}
+- (BOOL)validButton:(NSInteger)index {return index>=0&&index<19&&index!=9&&index!=5;}
 - (void)applicationDidFinishLaunching:(NSNotification *)note {
     (void)note;currentApp=self;
     NSUserDefaults *d=NSUserDefaults.standardUserDefaults;PadMacMigrateShortcuts(d);
@@ -75,8 +75,9 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
         if(action==0&&i==7)primary=@"Click sinistro";
         if(action==12)primary=shortcut[@"label"]?:@"Registra shortcut";
         if(action==11)primary=path.length?[NSFileManager.defaultManager displayNameAtPath:path]:@"Scegli applicazione";
+        if(i==5){action=13;primary=@"Joystick destro → scroll";}
         NSMutableDictionary *row=[@{@"id":@(i),@"name":names[i],@"glyph":glyphs[i],@"group":group,@"action":@(action),@"primary":primary} mutableCopy];
-        if(hold[@"label"])row[@"hold"]=hold[@"label"];
+        if(i!=5&&hold[@"label"])row[@"hold"]=hold[@"label"];
         if(action==11&&path.length)row[@"appPath"]=path;
         [rows addObject:row];
     }
@@ -124,6 +125,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
         if(pressed&&index==2)[self hideLauncher];
         return YES;
     }
+    if(index==5){input_scroll_mode(pressed);return YES;}
     if([NSUserDefaults.standardUserDefaults dictionaryForKey:[self holdKey:index]]){
         longpress_button(index,pressed,NSProcessInfo.processInfo.systemUptime,hold_event);return YES;
     }
