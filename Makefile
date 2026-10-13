@@ -1,5 +1,5 @@
-# Keep the bundle path and signing identity stable; display name is Punto.
-APP := build/PadMac.app
+# Keep the signing identity and bundle ID stable across builds.
+APP := build/Punto.app
 CC := clang
 SWIFTC := swiftc
 ARCH := $(shell uname -m)
@@ -9,7 +9,7 @@ CFLAGS := -Wall -Wextra -Werror -O2 -mmacosx-version-min=12.0
 FRAMEWORKS := -framework Cocoa -framework SwiftUI -framework ApplicationServices -framework IOKit -framework UniformTypeIdentifiers
 
 .PHONY: all run clean test test-dock test-launcher-ui
-all: $(APP)/Contents/MacOS/PadMac
+all: $(APP)/Contents/MacOS/Punto
 
 build/launcher.o: launcher.c launcher.h
 	mkdir -p build
@@ -43,7 +43,7 @@ build/ShortcutRecorder.o: ShortcutRecorder.m ShortcutRecorder.h
 	mkdir -p build
 	$(CC) $(CFLAGS) -fobjc-arc -c ShortcutRecorder.m -o $@
 
-$(APP)/Contents/MacOS/PadMac: build/main.o build/UI.o build/ShortcutRecorder.o build/input.o build/keyboard.o build/longpress.o build/launcher.o build/AppIcon.icns Info.plist Makefile
+$(APP)/Contents/MacOS/Punto: build/main.o build/UI.o build/ShortcutRecorder.o build/input.o build/keyboard.o build/longpress.o build/launcher.o build/AppIcon.icns Info.plist Makefile
 	mkdir -p $(APP)/Contents/MacOS $(APP)/Contents/Resources
 	$(SWIFTC) -target $(TARGET) build/main.o build/UI.o build/ShortcutRecorder.o build/input.o build/keyboard.o build/longpress.o build/launcher.o $(FRAMEWORKS) -o $@
 	cp Info.plist $(APP)/Contents/Info.plist

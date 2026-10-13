@@ -1,109 +1,111 @@
-# Sviluppo di Punto
+# Developing Punto
 
-[← Torna al README](../README.md)
+[← Back to the README](../README.md)
 
-Esegui i comandi dalla radice del progetto. La compilazione usa i Command Line Tools: non è necessario Xcode completo.
+Run commands from the project root. The build uses Apple Command Line Tools; full Xcode is not required.
 
-## Architettura
+## Architecture
 
-| File | Responsabilità |
+| File | Responsibility |
 | :--- | :--- |
-| `UI.swift` | Impostazioni SwiftUI, temi, ricerca e filtri |
-| `LauncherUI.swift` | Overlay direzionale compatto |
-| `UIController.h` | Contratto tra SwiftUI e runtime Objective-C |
-| `main.m` | Ciclo di vita, preferenze, apertura app e routing del controller |
-| `input.c` | Lettura HID, cursore, click, touchpad e scroll |
-| `keyboard.c` | Shortcut mantenute e conteggi di riferimento dei tasti |
-| `longpress.c` | Distinzione tra tap e pressione lunga |
-| `launcher.c` | Selezione e ciclo dei due slot per direzione |
-| `ShortcutRecorder.m` | Registrazione delle combinazioni e migrazione delle preferenze |
-| `scripts/generate-brand-icon.swift` | Generazione dell’icona macOS |
+| `UI.swift` | SwiftUI settings, themes, search, and filters |
+| `LauncherUI.swift` | Compact directional overlay |
+| `UIController.h` | Interface between SwiftUI and the Objective-C runtime |
+| `main.m` | Lifecycle, preferences, app launching, and controller routing |
+| `input.c` | HID input, cursor, clicks, touchpad, and scrolling |
+| `keyboard.c` | Held shortcuts and shared-key reference counts |
+| `longpress.c` | Tap versus long-press state machine |
+| `launcher.c` | Directional selection and two-slot cycling |
+| `ShortcutRecorder.m` | Shortcut recording and preference migration |
+| `scripts/generate-brand-icon.swift` | macOS icon generation |
 
-Il filtro HID riconosce il DualSense standard Sony, **VID 054c / PID 0ce6**. La lettura è non esclusiva: sospendi Punto quando giochi per evitare input simultanei.
+The HID filter recognizes the standard Sony DualSense: **VID 054c / PID 0ce6**. Input is read non-exclusively. Pause Punto while playing a game to avoid simultaneous input.
 
-## Firma locale
+## Local code signing
 
-La build del repository è configurata per il certificato **PadMac Local Development**, presente nel Portachiavi del Mac di sviluppo. Il certificato e la chiave privata **non sono inclusi** nel repository.
+The repository’s build is configured for the **PadMac Local Development** certificate in the development Mac’s keychain. This is a legacy certificate name, not the application name. Neither the certificate nor its private key is included in the repository.
 
-Su un altro Mac:
+On another Mac:
 
-1. Crea o importa nel tuo Portachiavi un’identità locale valida per il code signing.
-2. Elenca le identità disponibili:
+1. Create or import a local identity suitable for code signing into your keychain.
+2. List available identities:
 
    ```sh
    security find-identity -v -p codesigning
    ```
 
-3. Nel `Makefile`, aggiorna `SIGN_IDENTITY` con il nome del tuo certificato e il valore `certificate leaf = H"…"` con il suo fingerprint.
-4. Compila e verifica:
+3. Update `SIGN_IDENTITY` in the `Makefile` with your certificate name and the `certificate leaf = H"…"` requirement with its fingerprint.
+4. Build and verify:
 
    ```sh
    make
-   codesign --verify --strict build/PadMac.app
-   codesign -d -r- build/PadMac.app
+   codesign --verify --strict build/Punto.app
+   codesign -d -r- build/Punto.app
    ```
 
-Mantieni **certificato, bundle ID e requisito di firma stabili** tra le compilazioni. Un nuovo certificato o il passaggio dalla firma ad-hoc possono richiedere di rimuovere e riaggiungere l’app in Accessibilità.
+Keep the **certificate, bundle ID, and signing requirement stable** between builds. Changing the certificate, replacing an ad-hoc signature, or changing the bundle path may require removing and adding the app again in Accessibility settings.
 
-La firma locale non sostituisce Developer ID e notarizzazione per la distribuzione ad altri utenti.
+Local signing does not replace Developer ID signing and notarization for distribution to other users.
 
-### Identità mantenuta
+### Application identity
 
-| Elemento | Valore |
+| Component | Value |
 | :--- | :--- |
-| Nome visualizzato | Punto |
-| Bundle | `build/PadMac.app` |
-| Eseguibile | `PadMac` |
+| Display name | Punto |
+| Bundle | `build/Punto.app` |
+| Executable | `Punto` |
 | Bundle ID | `local.padmac.controller` |
 
-Il nome interno originale evita una migrazione non necessaria di preferenze e permessi. Le vecchie voci in Accessibilità possono ancora apparire come PadMac.
+The original bundle ID preserves the preferences domain. Its internal name and the certificate name are retained for compatibility; the application itself is named Punto.
 
-## Comportamento degli input
+When upgrading from the old bundle, replace the old Dock shortcut with `Punto.app`. If Accessibility authorization stops working, remove the old entry and add the new bundle.
 
-### Mouse e scroll
+## Input behavior
 
-- Tick del cursore a **120 Hz**, con accelerazione progressiva e zona morta radiale.
-- R1 cambia il joystick destro da cursore a scroll; il touchpad continua a muovere il mouse.
-- Scroll continuo in pixel, con accumulo delle frazioni per non perdere i movimenti lenti.
-- Sensibilità scroll: **100–3000 px/s**, valore iniziale **900**, indipendente dalla velocità del cursore.
-- Touchpad: movimento relativo, sensibilità fissa **0,8 punti/unità**. Sono decodificati i report USB `0x01` e Bluetooth completi `0x31`.
-- I report Bluetooth semplificati non contengono il touchpad.
+### Mouse and scrolling
 
-### Shortcut
+- Cursor updates at **120 Hz**, with progressive acceleration and a radial deadzone.
+- R1 changes the right stick from cursor movement to scrolling. The touchpad continues to move the cursor.
+- Continuous pixel-based scrolling accumulates fractional deltas so slow movement is not lost.
+- Scroll sensitivity: **100–3000 px/s**, initially **900**, independent of cursor speed.
+- Relative touchpad movement uses a fixed sensitivity of **0.8 points/unit**. USB `0x01` and full Bluetooth `0x31` reports are decoded.
+- Simplified Bluetooth reports do not include touchpad data.
 
-- Un tasto con modificatori oppure una combinazione di soli modificatori, non macro o sequenze.
-- I soli modificatori sono riprodotti con eventi `flagsChanged`.
-- Le combinazioni restano attive fino al rilascio del pulsante.
-- I conteggi di riferimento evitano il rilascio anticipato di tasti condivisi tra più pulsanti.
-- I keycode sono fisici: cambiando layout di tastiera può cambiare il carattere prodotto.
-- Invio ed Escape sono registrabili; usa i pulsanti del dialogo per salvare o annullare.
+### Shortcuts
 
-### Tap e pressione lunga
+- A single key with modifiers, or a modifier-only chord—not macros or sequences.
+- Modifier-only combinations are reproduced using `flagsChanged` events.
+- Chords remain active until the controller button is released.
+- Reference counts prevent keys shared by several buttons from being released prematurely.
+- Keycodes are physical: changing the keyboard layout may change the resulting character.
+- Return and Escape can be recorded. Use the dialog buttons to save or cancel.
 
-- Senza Hold: pressione immediata, rilascio al rilascio del controller.
-- Con Hold: tap sotto **0,45 s** → azione principale al rilascio; oltre la soglia → solo la shortcut lunga, mantenuta fino al rilascio.
-- Un Hold su R2/L2 sostituisce il normale trascinamento con questa distinzione.
+### Taps and long presses
+
+- Without Hold: immediate key down, followed by key up on controller release.
+- With Hold: a tap below **0.45 seconds** runs the primary action on release. Beyond the threshold, only the long-press chord is held until release.
+- Assigning Hold to R2/L2 replaces normal dragging with this tap/hold behavior.
 
 ### Launcher
 
-- Due slot per ciascuna delle quattro direzioni, salvati per percorso.
-- Una freccia seleziona e **apre immediatamente** la prima app disponibile.
-- Ripremere la stessa freccia mentre l’overlay è visibile alterna i due slot, saltando quelli vuoti.
-- Una nuova direzione seleziona la sua prima app disponibile.
-- L’overlay si chiude **1,2 s** dopo l’ultima freccia; la pressione successiva riparte dal primo slot.
-- ○ chiude solo il feedback visivo: l’app già aperta non viene chiusa.
-- Pannello non attivante, massimo **560 × 400 punti**: non ruba il focus e da solo non aggiunge Punto al Dock.
-- Durante l’overlay gli altri pulsanti sono consumati e il cursore è fermo.
+- Two slots per direction, saved as application paths.
+- A D-pad direction selects and **immediately opens** the first available app.
+- Pressing the same direction again while the overlay is visible cycles between occupied slots.
+- A different direction selects its first available app.
+- The overlay closes **1.2 seconds** after the last direction press. A later press starts from the first slot again.
+- ○ only dismisses visual feedback; it does not close an app already opened.
+- The non-activating panel is at most **560 × 400 points**. It does not steal focus or add a Dock icon on its own.
+- Other buttons are consumed and cursor movement is suppressed while the overlay is visible.
 
-Le vecchie app assegnate alle frecce vengono migrate nel primo slot. Le precedenti shortcut/Hold delle frecce e di R1 sono conservate, ma non eseguite perché questi input sono ora riservati.
+Apps previously assigned to D-pad buttons are migrated into the first slot. Previous D-pad and R1 shortcut/Hold assignments remain stored, but are not executed because these inputs now have reserved roles.
 
-### Sicurezza e preferenze
+### Safety and preferences
 
-Punto parte sospeso. Sospensione, disconnessione, perdita di Accessibilità e uscita normale rilasciano i tasti sintetici mantenuti. Cambiare un’assegnazione sospende il controllo prima di aprire un selettore; il Launcher annulla click/shortcut mantenuti e pressioni lunghe in attesa.
+Punto starts paused. Pausing, disconnecting, losing Accessibility permission, and normal application exit release held synthetic keys. Changing an assignment pauses input before opening a picker. Opening the launcher releases held clicks/shortcuts and cancels pending long presses.
 
-Le preferenze sono salvate con `NSUserDefaults`. Le app sono memorizzate per percorso: se spostate o rimosse, vanno selezionate nuovamente.
+Preferences use `NSUserDefaults`. Applications are stored by path and must be selected again if moved or removed.
 
-## Test
+## Tests
 
 ```sh
 make test
@@ -111,53 +113,53 @@ make test-dock
 make test-launcher-ui
 ```
 
-| Suite | Verifica |
+| Suite | Coverage |
 | :--- | :--- |
-| `buttons` | Dispatch, deduplicazione delle pressioni, sospensione |
-| `shortcuts` | Registrazione, tasti speciali, modificatori e migrazione |
-| `keyboard` | Mantenimento, combinazioni condivise e rilasci di sicurezza |
-| `longpress` | Soglia, esclusione tap/Hold e cancellazione |
-| `launcher` | Direzioni, due slot, slot vuoti e reset |
-| `scroll` | Direzioni, sensibilità, limiti, frazioni e ritorno al cursore |
-| `dock` | Dock alla configurazione aperta, chiusura e riapertura |
-| `launcher-ui` | Routing, apertura automatica, chiusura e preview dell’overlay |
+| `buttons` | Dispatch, press deduplication, and pausing |
+| `shortcuts` | Recording, special keys, modifiers, and migration |
+| `keyboard` | Held chords, shared keys, and safety releases |
+| `longpress` | Thresholds, tap/hold exclusivity, and cancellation |
+| `launcher` | Directions, two slots, empty slots, and reset |
+| `scroll` | Directions, sensitivity, bounds, fractional deltas, and cursor restoration |
+| `dock` | Showing the Dock icon with settings, closing, and reopening |
+| `launcher-ui` | Routing, automatic launching, dismissal, and overlay preview |
 
-Le suite UI richiedono una sessione grafica macOS. Il test del Launcher usa preferenze volatili isolate e intercetta le aperture: **non modifica le assegnazioni e non avvia le app di esempio**.
+UI suites require a macOS graphical session. The launcher test uses isolated volatile preferences and intercepts app launches: **it does not change assignments or open demo applications**.
 
-## Verifica manuale
+## Manual verification
 
-- [ ] Connessione e disconnessione USB e Bluetooth.
-- [ ] Direzioni del cursore, zona morta e monitor multipli.
-- [ ] Touchpad, sollevamento e riposizionamento del dito.
-- [ ] R2/L2: click e trascinamento; rilascio corretto premendoli insieme.
-- [ ] R1: scroll nei quattro sensi, cambio sensibilità e ritorno al mouse.
-- [ ] Shortcut normali e ⌥⇧ mantenute, anche con un assistente vocale.
-- [ ] Tap/Hold e sospensione prima/dopo la soglia.
-- [ ] Launcher: apertura automatica, secondo slot, cambio direzione e timeout.
-- [ ] Nessuna shortcut normale di ✕/○ durante l’overlay.
-- [ ] Persistenza delle preferenze al riavvio.
-- [ ] Annullamento dei selettori senza modificare l’assegnazione precedente.
+- [ ] USB and Bluetooth connection/disconnection.
+- [ ] Cursor direction, deadzone, and multiple displays.
+- [ ] Touchpad tracking, finger lift, and repositioning.
+- [ ] R2/L2 clicks and dragging, including simultaneous presses.
+- [ ] R1 scrolling in all directions, sensitivity changes, and cursor restoration.
+- [ ] Held shortcuts and modifier-only ⌥⇧, including a voice assistant.
+- [ ] Tap/hold behavior and pausing before/after the threshold.
+- [ ] Automatic launcher opening, second slot, direction changes, and timeout.
+- [ ] No normal ✕/○ shortcut while the overlay is visible.
+- [ ] Preferences survive an application restart.
+- [ ] Canceling a picker preserves its previous assignment.
 
-I test automatici non sostituiscono la verifica con un controller reale e nelle applicazioni destinatarie.
+Automated tests do not replace testing with a real controller in the target applications.
 
-## Screenshot
+## Screenshots
 
-Per salvare solo il contenuto della finestra, senza catturare il desktop:
+Capture only the application’s own window content, without taking a desktop screenshot:
 
 ```sh
-# Chiudi prima l’app, poi avviala con gli argomenti di preview.
-open build/PadMac.app --args \
+# Quit the app first, then launch it with preview arguments.
+open build/Punto.app --args \
   --ui-page mouse --ui-dark \
   --ui-preview "$PWD/build/ui-mouse.png"
 ```
 
-Pagine: `buttons`, `launcher`, `mouse`, `permissions`. `--ui-group Dorsali` filtra i pulsanti. Ometti `--ui-dark` per una preview chiara. Le opzioni non cambiano le assegnazioni.
+Available pages: `buttons`, `launcher`, `mouse`, `permissions`. `--ui-group Dorsali` filters the current Italian-language button group. Omit `--ui-dark` for a light preview. These options do not change assignments.
 
-`make test-launcher-ui` genera `build/ui-launcher.png` con app dimostrative. Le immagini pubblicate nel README sono in `docs/screenshots/`.
+`make test-launcher-ui` creates `build/ui-launcher.png` with demo applications. README screenshots live in `docs/screenshots/`.
 
-## Limiti attuali
+## Current limitations
 
-- Un controller alla volta; DualSense Edge non supportato.
-- Nessun profilo per applicazione, avvio automatico o pacchetto notarizzato.
-- PS e Mute dipendono dagli eventi resi disponibili da macOS e firmware.
-- Le combinazioni intercettate direttamente da macOS e alcuni tasti multimediali potrebbero non essere catturati o riproducibili.
+- One controller at a time; DualSense Edge is not supported.
+- No per-application profiles, automatic startup, or notarized release package.
+- PS and Mute depend on the events exposed by macOS and the controller firmware.
+- System-intercepted combinations and some media keys may not be captured or reproducible.

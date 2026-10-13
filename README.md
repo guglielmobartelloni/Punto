@@ -1,139 +1,142 @@
 <p align="center">
-  <img src="assets/brand/Punto.png" width="96" alt="Icona di Punto">
+  <img src="assets/brand/Punto.png" width="96" alt="Punto app icon">
 </p>
 
 <h1 align="center">Punto</h1>
 
 <p align="center">
-  Il tuo Mac, dal controller.<br>
-  Mouse, shortcut e app launcher per il DualSense della PS5.
+  Your Mac. Your controller.<br>
+  Mouse control, shortcuts, and an app launcher for the PS5 DualSense.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/macOS-12%2B-202024?logo=apple&amp;logoColor=white" alt="macOS 12 o successivo">
-  <img src="https://img.shields.io/badge/UI-SwiftUI-F05259" alt="Interfaccia SwiftUI">
-  <img src="https://img.shields.io/badge/Input-C-555555" alt="Input in C">
-  <img src="https://img.shields.io/badge/status-in%20sviluppo-F05259" alt="In sviluppo">
+  <img src="https://img.shields.io/badge/macOS-12%2B-202024?logo=apple&amp;logoColor=white" alt="macOS 12 or later">
+  <img src="https://img.shields.io/badge/UI-SwiftUI-F05259" alt="SwiftUI interface">
+  <img src="https://img.shields.io/badge/Input-C-555555" alt="Input engine written in C">
+  <img src="https://img.shields.io/badge/status-in%20development-F05259" alt="In development">
 </p>
 
 <p align="center">
-  <a href="#cosa-fa">Funzioni</a> ·
-  <a href="#screenshot">Screenshot</a> ·
-  <a href="#avvio">Avvio</a> ·
-  <a href="docs/DEVELOPMENT.md">Sviluppo</a>
+  <a href="#features">Features</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#getting-started">Getting started</a> ·
+  <a href="docs/DEVELOPMENT.md">Development</a>
 </p>
 
 ---
 
-## Cosa fa
+## Features
 
-| | Funzione |
+| | What it does |
 | :--- | :--- |
-| **Mouse** | Muovi il cursore con il joystick destro o il touchpad. |
-| **Scroll** | Tieni premuto R1 e usa il joystick destro. Sensibilità regolabile. |
-| **Shortcut** | Registra la tua combinazione, anche solo modificatori come ⌥⇧. |
-| **Push-to-talk** | La combinazione resta premuta finché tieni premuto il pulsante. |
-| **Pressione lunga** | Assegna una seconda shortcut allo stesso pulsante. |
-| **Launcher** | Quattro direzioni, fino a due app per direzione. Apertura immediata. |
+| **Mouse control** | Move the cursor with the right stick or the controller’s touchpad. |
+| **Scrolling** | Hold R1 and move the right stick. Scroll sensitivity is adjustable. |
+| **Custom shortcuts** | Record your own combination, including modifier-only chords such as ⌥⇧. |
+| **Push-to-talk** | Keep the shortcut pressed for as long as you hold the controller button. |
+| **Long press** | Assign a second shortcut to the same button. |
+| **Directional launcher** | Four directions, up to two apps per direction. Launch instantly. |
 
-Interfaccia **nativa SwiftUI**, temi scuro/chiaro/sistema e preferenze salvate automaticamente. Nessun server, account o servizio web richiesto dall’app.
+A **native SwiftUI interface**, dark/light/system themes, and automatically saved preferences. The app requires no server, account, or web service.
 
-## Screenshot
+## Screenshots
 
-### Un launcher come un HUD
+### An app launcher that feels like a HUD
 
-Premi una freccia: l’app si apre subito e l’overlay mostra la selezione. Ripremi la stessa freccia mentre è visibile per passare alla seconda app. Il feedback scompare dopo **1,2 secondi**: nessun pulsante di conferma.
+Press a direction to open the app immediately. The overlay shows your selection. Press the same direction again while it is visible to switch to the second app. It disappears after **1.2 seconds**—no confirmation button required.
 
 <p align="center">
-  <img src="docs/screenshots/launcher-overlay.png" width="640" alt="Overlay compatto di Punto: due applicazioni per ciascuna delle quattro direzioni">
+  <img src="docs/screenshots/launcher-overlay.png" width="640" alt="Punto’s compact overlay with two apps in each of four directions">
 </p>
 
-<p align="center"><sub>Overlay reale con applicazioni dimostrative. Nessuna app viene preconfigurata all’installazione.</sub></p>
+<p align="center"><sub>Actual overlay with demo applications. No apps are assigned by default.</sub></p>
 
-### Ogni pulsante, la tua azione
+### Your buttons, your actions
 
-Shortcut registrate, applicazioni da richiamare e una colonna separata per la pressione lunga.
+Recorded shortcuts, apps to bring to the foreground, and a separate assignment for long presses.
 
 <p align="center">
-  <img src="docs/screenshots/buttons.png" width="960" alt="Configurazione dei pulsanti: azione principale e shortcut per la pressione lunga">
+  <img src="docs/screenshots/buttons.png" width="960" alt="Controller button settings with primary and long-press actions">
 </p>
 
 <details>
-<summary><strong>Mouse e configurazione del launcher</strong></summary>
+<summary><strong>Mouse settings and launcher configuration</strong></summary>
 
-### Mouse e scroll
+### Mouse and scrolling
 
-Velocità del cursore, zona morta e sensibilità dello scroll sono configurabili. Lo scroll è indipendente dalla velocità del mouse.
+Adjust cursor speed, stick deadzone, and scroll sensitivity. Scroll speed is independent of cursor speed.
 
-<img src="docs/screenshots/mouse.png" width="960" alt="Impostazioni mouse con slider dedicato alla sensibilità dello scroll">
+<img src="docs/screenshots/mouse.png" width="960" alt="Mouse settings with a dedicated scroll sensitivity slider">
 
-### Le tue app nelle quattro direzioni
+### Your apps in four directions
 
-Scegli fino a **otto applicazioni**, distribuite tra su, destra, giù e sinistra.
+Choose up to **eight applications**, arranged across up, right, down, and left.
 
-<img src="docs/screenshots/launcher-settings.png" width="960" alt="Configurazione del launcher direzionale con due slot applicazione per direzione">
+<img src="docs/screenshots/launcher-settings.png" width="960" alt="Directional launcher settings with two application slots per direction">
 
 </details>
 
-## Controlli
+<sub>The screenshots show the current Italian-language interface.</sub>
 
-| Controller | Azione |
+## Controls
+
+| Controller input | Action |
 | :--- | :--- |
-| Joystick destro | Muove il cursore |
-| Touchpad | Muove il cursore con un dito |
-| **R1 + joystick destro** | Scroll verticale e orizzontale |
-| **R2** | Click sinistro; mantieni premuto per trascinare |
-| **L2** | Click destro; mantieni premuto per trascinare |
-| **↑ → ↓ ←** | Aprono l’app nella direzione; ripremi per la seconda |
-| **○ nell’overlay** | Chiude il feedback visivo |
-| **Options** | Attiva o sospende il controllo |
-| Altri pulsanti | Shortcut o applicazioni personalizzabili |
+| Right stick | Move the cursor |
+| Touchpad | Move the cursor with one finger |
+| **R1 + right stick** | Scroll vertically and horizontally |
+| **R2** | Left click; hold to drag |
+| **L2** | Right click; hold to drag |
+| **↑ → ↓ ←** | Open the app in that direction; press again for the second app |
+| **○ while the overlay is visible** | Dismiss the visual feedback |
+| **Options** | Enable or pause controller input |
+| Other buttons | Custom shortcuts or application actions |
 
-> **Pressione lunga:** senza Hold, la shortcut parte subito e resta premuta fino al rilascio. Con Hold, un tap esegue l’azione principale al rilascio; dopo **0,45 s** si attiva solo la shortcut lunga.
+> **Long presses:** without a Hold assignment, a shortcut starts immediately and stays pressed until release. With Hold assigned, a quick tap runs the primary action on release; after **0.45 seconds**, only the long-press shortcut is activated.
 
-## Avvio
+## Getting started
 
-### Requisiti
+### Requirements
 
-- **macOS 12+** e DualSense standard, via USB o Bluetooth.
-- **Command Line Tools di Apple** con Swift e SDK macOS. Xcode completo non serve.
-- Un certificato locale per la firma: vedi [configurazione della build](docs/DEVELOPMENT.md#firma-locale).
+- **macOS 12+** and a standard DualSense, connected through USB or Bluetooth.
+- **Apple Command Line Tools**, including Swift and the macOS SDK. Full Xcode is not required.
+- A local code-signing certificate: see [build signing setup](docs/DEVELOPMENT.md#local-code-signing).
 
-### Compila e apri
+### Build and run
 
 ```sh
 git clone git@github.com:guglielmobartelloni/Punto.git
 cd Punto
 make
-open build/PadMac.app
+open build/Punto.app
 ```
 
-La repository è privata: serve un account GitHub autorizzato per clonarla.
+This repository is private. Cloning requires an authorized GitHub account.
 
-### Prima configurazione
+### First-time setup
 
-1. Collega il controller. Per Bluetooth, tieni premuti **PS + Create** fino al lampeggio e abbinalo nelle impostazioni di macOS.
-2. In Punto, apri **Permessi → Apri impostazioni Accessibilità** e autorizza l’app. Concedi anche **Monitoraggio input** se richiesto da macOS.
-3. Configura **Pulsanti**, **Launcher** e **Mouse**, poi premi **Attiva**.
+1. Connect the controller. For Bluetooth pairing, hold **PS + Create** until the light flashes, then pair it in macOS settings.
+2. In Punto, open **Permessi → Apri impostazioni Accessibilità** and grant Accessibility permission. Also grant Input Monitoring if macOS requests it.
+3. Configure **Pulsanti** (buttons), **Launcher**, and **Mouse**, then click **Attiva** (enable).
 
-Punto parte sempre sospeso. Chiudere le impostazioni lo lascia nella barra dei menu; il Dock compare solo mentre la configurazione è aperta.
+Punto always starts paused. Closing settings leaves it running in the menu bar. It appears in the Dock only while the configuration window is open.
 
-## Da sapere
+## Good to know
 
-- È una versione **in sviluppo**, non ancora distribuita con firma Developer ID e notarizzazione.
-- Sono supportati **un controller alla volta** e il DualSense standard, non il DualSense Edge.
-- R1, Options e le frecce hanno ruoli riservati. Gli altri pulsanti restano personalizzabili.
-- Alcune combinazioni riservate da macOS potrebbero non essere registrabili o riproducibili.
-- Il bundle si chiama ancora `PadMac.app` per conservare percorso, identità di firma, permessi e preferenze. Il nome visualizzato è **Punto**.
+- This is an **in-development** build, not yet distributed with Developer ID signing and notarization.
+- It supports **one controller at a time** and the standard DualSense, not the DualSense Edge.
+- R1, Options, and the D-pad have reserved roles. Other buttons are customizable.
+- Some macOS-reserved combinations may not be recordable or reproducible.
+- The bundle and executable are named **Punto.app** and **Punto**. The original bundle identifier and signing identity are retained to preserve preferences and signing continuity.
+- If upgrading from the old bundle path, macOS may require you to add Punto again under Accessibility.
 
-## Sviluppo
+## Development
 
 ```sh
-make test                 # Input, shortcut, scroll e selezione direzionale
-make test-dock            # Ciclo di vita della finestra e del Dock
-make test-launcher-ui     # Overlay, routing e preview con app dimostrative
+make test                 # Input, shortcuts, scrolling, and directional selection
+make test-dock            # Window and Dock lifecycle
+make test-launcher-ui     # Overlay routing and a preview with demo apps
 ```
 
-I due test UI richiedono una sessione grafica macOS. Non avviano le app dimostrative e non modificano le assegnazioni del launcher.
+The two UI tests require a macOS graphical session. They do not launch demo applications or change launcher assignments.
 
-→ [Architettura, firma locale e verifiche manuali](docs/DEVELOPMENT.md)
+→ [Architecture, local signing, and manual verification](docs/DEVELOPMENT.md)
