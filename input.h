@@ -4,6 +4,8 @@ void input_start(void);
 void input_stop(void);
 void input_tick(double seconds, double speed, double deadzone);
 void input_enable(bool enabled);
+void input_release_actions(void);
+void input_suppress_pointer(bool suppressed);
 bool input_connected(void);
 bool input_enabled(void);
 void input_shortcut(int index, int keycode, unsigned long long modifiers);

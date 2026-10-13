@@ -10,11 +10,12 @@ private let surface = adaptive(.white, NSColor(red: 0.135, green: 0.135, blue: 0
 private let sidebarColor = adaptive(NSColor(white: 0.945, alpha: 1), NSColor(red: 0.12, green: 0.12, blue: 0.135, alpha: 1))
 
 private enum Page: String, CaseIterable, Identifiable {
-    case buttons = "Pulsanti", mouse = "Mouse", permissions = "Permessi"
+    case buttons = "Pulsanti", launcher = "Launcher", mouse = "Mouse", permissions = "Permessi"
     var id: String { rawValue }
     var icon: String {
         switch self {
         case .buttons: return "gamecontroller"
+        case .launcher: return "arrow.up.and.down.and.arrow.left.and.right"
         case .mouse: return "cursorarrow.motionlines"
         case .permissions: return "lock.shield"
         }
@@ -22,12 +23,13 @@ private enum Page: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .buttons: return "Assegna applicazioni e shortcut ai pulsanti del controller."
+        case .launcher: return "Quattro direzioni. Due app per direzione."
         case .mouse: return "Personalizza il movimento del cursore."
         case .permissions: return "Gestisci l’accesso di Punto al sistema."
         }
     }
 }
-private enum Theme: String, CaseIterable {
+enum Theme: String, CaseIterable {
     case dark = "Scuro", light = "Chiaro", system = "Sistema"
     var appearance: NSAppearance? {
         switch self {
@@ -37,7 +39,7 @@ private enum Theme: String, CaseIterable {
         }
     }
 }
-private struct ButtonSetting: Identifiable {
+struct ButtonSetting: Identifiable {
     let id: Int
     let name: String
     let glyph: String
@@ -56,7 +58,7 @@ private struct ButtonSetting: Identifiable {
         }
     }
 }
-private final class SettingsModel: ObservableObject {
+final class SettingsModel: ObservableObject {
     let controller: PadMacUIController
     @Published var connected = false
     @Published var enabled = false
@@ -65,14 +67,18 @@ private final class SettingsModel: ObservableObject {
     @Published var deadzone = 0.12
     @Published var buttons: [ButtonSetting] = []
     @Published var theme = Theme.dark
+    @Published var launcherApps: [[String]] = Array(repeating: ["", ""], count: 4)
+    @Published var launcherVisible = false
+    @Published var launcherDirection = -1
+    @Published var launcherSlot = -1
     private var lastSnapshot: NSDictionary?
     private var timer: Timer?
-    init(controller: PadMacUIController) {
+    init(controller: PadMacUIController, pollInterval: Double = 0.15) {
         self.controller = controller
         theme = Theme(rawValue: UserDefaults.standard.string(forKey: "uiTheme") ?? "") ?? .dark
         NSApp.appearance = theme.appearance
         refresh()
-        let timer = Timer(timeInterval: 0.15, repeats: true) { [weak self] _ in self?.refresh() }
+        let timer = Timer(timeInterval: pollInterval, repeats: true) { [weak self] _ in self?.refresh() }
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
     }
@@ -86,6 +92,13 @@ private final class SettingsModel: ObservableObject {
         trusted = raw["trusted"] as? Bool ?? false
         speed = raw["speed"] as? Double ?? 1100
         deadzone = raw["deadzone"] as? Double ?? 0.12
+        launcherVisible = raw["launcherVisible"] as? Bool ?? false
+        launcherDirection = raw["launcherDirection"] as? Int ?? -1
+        launcherSlot = raw["launcherSlot"] as? Int ?? -1
+        launcherApps = (0..<4).map { direction in
+            let stored = raw["launcherApps"] as? [[String]] ?? []
+            return (0..<2).map { slot in direction < stored.count && slot < stored[direction].count ? stored[direction][slot] : "" }
+        }
         buttons = (raw["buttons"] as? [[String: Any]] ?? []).compactMap { row in
             guard let id = row["id"] as? Int, let name = row["name"] as? String else { return nil }
             return ButtonSetting(id: id, name: name, glyph: row["glyph"] as? String ?? "•",
@@ -101,6 +114,8 @@ private final class SettingsModel: ObservableObject {
     func assign(_ action: Int, to id: Int) { controller.assignAction(action, forButton: id); refresh() }
     func recordHold(_ id: Int) { controller.recordHold(forButton: id); refresh() }
     func removeHold(_ id: Int) { controller.removeHold(forButton: id); refresh() }
+    func configureLauncher(_ direction: Int, slot: Int) { controller.configureLauncherDirection(direction, slot: slot); refresh() }
+    func clearLauncher(_ direction: Int, slot: Int) { controller.clearLauncherDirection(direction, slot: slot); refresh() }
 }
 
 @objc(PadMacUI) final class PadMacUI: NSObject {
@@ -119,6 +134,18 @@ private final class SettingsModel: ObservableObject {
         window.setFrameAutosaveName("PadMacSettingsCompact")
         return window
     }
+    @objc static func makeLauncher(controller: PadMacUIController) -> NSPanel {
+        let model = SettingsModel(controller: controller, pollInterval: 0.03)
+        let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: min(820, screen.width - 48), height: min(640, screen.height - 48)),
+                            styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        panel.isOpaque = false; panel.backgroundColor = .clear; panel.hasShadow = true
+        panel.level = .floating; panel.hidesOnDeactivate = false; panel.isReleasedWhenClosed = false
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.appearance = NSAppearance(named: .darkAqua)
+        panel.contentView = NSHostingView(rootView: PuntoLauncherView(model: model))
+        return panel
+    }
 }
 
 private struct SettingsView: View {
@@ -131,12 +158,12 @@ private struct SettingsView: View {
         self.model = model
         let args = CommandLine.arguments
         if let index = args.firstIndex(of: "--ui-page"), index + 1 < args.count {
-            let pages: [String: Page] = ["mouse": .mouse, "buttons": .buttons, "permissions": .permissions]
+            let pages: [String: Page] = ["mouse": .mouse, "buttons": .buttons, "launcher": .launcher, "permissions": .permissions]
             _page = State(initialValue: pages[args[index + 1]] ?? .buttons)
         }
         if let index = args.firstIndex(of: "--ui-group"), index + 1 < args.count {
             let value = args[index + 1]
-            if ["Tutti", "Simboli", "Frecce", "Dorsali", "Altri pulsanti"].contains(value) { _group = State(initialValue: value) }
+            if ["Tutti", "Simboli", "Dorsali", "Altri pulsanti"].contains(value) { _group = State(initialValue: value) }
         }
     }
     var body: some View {
@@ -150,7 +177,9 @@ private struct SettingsView: View {
                 else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 20) {
-                            if page == .mouse { mouseSettings } else { permissions }
+                            if page == .mouse { mouseSettings }
+                            else if page == .launcher { launcherSettings }
+                            else { permissions }
                         }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
@@ -237,7 +266,7 @@ private struct SettingsView: View {
                     if !search.isEmpty { Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundColor(.secondary) }.buttonStyle(.plain) }
                 }.padding(9).card(radius: 6)
                 Menu {
-                    ForEach(["Tutti", "Simboli", "Frecce", "Dorsali", "Altri pulsanti"], id: \.self) { value in
+                    ForEach(["Tutti", "Simboli", "Dorsali", "Altri pulsanti"], id: \.self) { value in
                         Button { group = value } label: {
                             if value == group { Label(value, systemImage: "checkmark") } else { Text(value) }
                         }
@@ -262,7 +291,7 @@ private struct SettingsView: View {
                             Text("Prova un altro nome o cambia gruppo.").font(.system(size: 11)).foregroundColor(.secondary)
                         }.frame(maxWidth: .infinity).padding(32)
                     }
-                    ForEach(["Simboli", "Frecce", "Dorsali", "Altri pulsanti"], id: \.self) { section in
+                    ForEach(["Simboli", "Dorsali", "Altri pulsanti"], id: \.self) { section in
                         let rows = filteredButtons.filter { $0.group == section }
                         if !rows.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
@@ -281,7 +310,7 @@ private struct SettingsView: View {
             Divider()
             HStack(spacing: 8) {
                 Image(systemName: "info.circle").foregroundColor(.secondary)
-                Text("Options è riservato ad attiva / sospendi. Le modifiche vengono salvate automaticamente.")
+                Text("Frecce → Launcher · Options → attiva / sospendi · Salvataggio automatico")
                     .font(.system(size: 10)).foregroundColor(.secondary)
                 Spacer(minLength: 0)
                 Button { showHelp.toggle() } label: { Image(systemName: "questionmark.circle").foregroundColor(.secondary) }.buttonStyle(.plain)
@@ -299,7 +328,7 @@ private struct SettingsView: View {
     }
     private var filteredButtons: [ButtonSetting] {
         model.buttons.filter { setting in
-            (group == "Tutti" || setting.group == group) &&
+            setting.id < 15 && (group == "Tutti" || setting.group == group) &&
             (search.isEmpty || "\(setting.name) \(setting.primary) \(setting.hold ?? "")".localizedCaseInsensitiveContains(search))
         }
     }
@@ -346,6 +375,45 @@ private struct SettingsView: View {
                 .frame(maxWidth: .infinity).help("Registra o rimuovi la shortcut per la pressione lunga")
         }.padding(.horizontal, 14).padding(.vertical, 10)
             .help(setting.id == 12 || setting.id == 14 ? "La disponibilità di questo pulsante dipende da macOS e dal firmware." : setting.name)
+    }
+    private var launcherSettings: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            heading("Navigazione direzionale", detail: "Una freccia apre l’overlay e seleziona la prima app. Ripremila per passare alla seconda.")
+            HStack(spacing: 18) {
+                Label("✕ apre l’app selezionata", systemImage: "play.circle")
+                Label("○ chiude l’overlay", systemImage: "xmark.circle")
+            }.font(.system(size: 11)).foregroundColor(.secondary)
+            ForEach(0..<4, id: \.self) { direction in
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 9) {
+                        Text(["↑", "→", "↓", "←"][direction]).font(.system(size: 21, weight: .medium)).foregroundColor(accent)
+                        Text(["Su", "Destra", "Giù", "Sinistra"][direction]).font(.system(size: 13, weight: .medium))
+                        Spacer()
+                        Text("MAX 2 APP").font(.system(size: 9, weight: .medium)).foregroundColor(.secondary)
+                    }
+                    HStack(spacing: 12) {
+                        ForEach(0..<2, id: \.self) { slot in
+                            let path = model.launcherApps[direction][slot]
+                            Menu {
+                                Button(path.isEmpty ? "Scegli applicazione…" : "Cambia applicazione…") { model.configureLauncher(direction, slot: slot) }
+                                if !path.isEmpty { Divider(); Button("Rimuovi applicazione") { model.clearLauncher(direction, slot: slot) } }
+                            } label: {
+                                HStack(spacing: 9) {
+                                    if !path.isEmpty { Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().frame(width: 20, height: 20) }
+                                    else { Image(systemName: "plus.app").font(.system(size: 17)).foregroundColor(.secondary) }
+                                    Text(path.isEmpty ? "App \(slot + 1) · Scegli applicazione…" : "\(slot + 1) · \(FileManager.default.displayName(atPath: path))")
+                                        .font(.system(size: 11)).lineLimit(1)
+                                    Spacer(minLength: 0)
+                                }.padding(11)
+                            }.menuStyle(.borderlessButton).tint(path.isEmpty ? .secondary : .primary).frame(height: 39)
+                                .background(Color.primary.opacity(0.035)).cornerRadius(6).frame(maxWidth: .infinity)
+                        }
+                    }
+                }.padding(18).card(radius: 8)
+            }
+            Text("Il controllo deve essere attivo. Nel Launcher, le frecce, ✕ e ○ navigano senza eseguire le shortcut. Le precedenti assegnazioni delle frecce sono conservate ma non vengono eseguite; eventuali app già assegnate sono migrate nello slot 1.")
+                .font(.system(size: 10)).foregroundColor(.secondary).lineSpacing(3)
+        }
     }
     private var mouseSettings: some View {
         VStack(alignment: .leading, spacing: 22) {

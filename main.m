@@ -5,10 +5,14 @@
 #import "ShortcutRecorder.h"
 #import "keyboard.h"
 #import "longpress.h"
+#import "launcher.h"
 #import "UIController.h"
 #import "build/PadMacUI-Swift.h"
 
-@interface App : NSObject <NSApplicationDelegate,NSWindowDelegate,PadMacUIController>
+@interface App : NSObject <NSApplicationDelegate,NSWindowDelegate,PadMacUIController> {
+    LauncherState _launcher;
+}
+@property NSPanel *launcherPanel;
 @property NSStatusItem *item;
 @property NSWindow *window;
 @property NSTimer *timer;
@@ -32,6 +36,14 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     (void)note;currentApp=self;
     NSUserDefaults *d=NSUserDefaults.standardUserDefaults;PadMacMigrateShortcuts(d);
     [d registerDefaults:@{@"speed":@1100,@"zone":@0.12}];
+    launcher_reset(&_launcher);
+    for(int direction=0;direction<4;direction++){
+        NSString *key=[self launcherKey:direction];int button=15+direction;
+        if(![d objectForKey:key]&&[d integerForKey:[self actionKey:button]]==11){
+            NSString *path=[d stringForKey:[self pathKey:button]];
+            if(path.length)[d setObject:@[path,@""] forKey:key];
+        }
+    }
     self.speed=MAX(200,MIN(2600,[d doubleForKey:@"speed"]));
     self.deadzone=MAX(0.03,MIN(0.4,[d doubleForKey:@"zone"]));
     self.item=[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
@@ -67,7 +79,10 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
         if(action==11&&path.length)row[@"appPath"]=path;
         [rows addObject:row];
     }
-    return @{@"connected":@(input_connected()),@"enabled":@(input_enabled()),@"trusted":@(AXIsProcessTrusted()),@"speed":@(self.speed),@"deadzone":@(self.deadzone),@"buttons":rows};
+    NSMutableArray *directions=[NSMutableArray new];
+    for(int i=0;i<4;i++)[directions addObject:[self launcherApps:i]];
+    return @{@"connected":@(input_connected()),@"enabled":@(input_enabled()),@"trusted":@(AXIsProcessTrusted()),@"speed":@(self.speed),@"deadzone":@(self.deadzone),@"buttons":rows,
+             @"launcherApps":directions,@"launcherVisible":@(_launcher.visible),@"launcherDirection":@(_launcher.direction),@"launcherSlot":@(_launcher.slot)};
 }
 - (void)setMouseSpeed:(double)speed deadzone:(double)deadzone {
     self.speed=MAX(200,MIN(2600,speed));self.deadzone=MAX(0.03,MIN(0.4,deadzone));
@@ -102,7 +117,13 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     [NSUserDefaults.standardUserDefaults removeObjectForKey:[self holdKey:index]];
 }
 - (BOOL)handleButton:(int)index pressed:(BOOL)pressed {
-    if(index<0){longpress_cancel(hold_event);return YES;}
+    if(index<0){longpress_cancel(hold_event);[self hideLauncher];return YES;}
+    if(index>=15&&index<=18){if(pressed)[self selectLauncherDirection:index-15];return YES;}
+    if(_launcher.visible){
+        if(pressed&&index==1)[self confirmLauncher];
+        else if(pressed&&index==2)[self hideLauncher];
+        return YES;
+    }
     if([NSUserDefaults.standardUserDefaults dictionaryForKey:[self holdKey:index]]){
         longpress_button(index,pressed,NSProcessInfo.processInfo.systemUptime,hold_event);return YES;
     }
@@ -130,22 +151,65 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
         return YES;
     }
     if(!pressed)return YES;
-    if(action==11){
-        NSString *path=[d stringForKey:[self pathKey:index]];if(!path.length)return YES;
-        NSURL *url=[NSURL fileURLWithPath:path];NSWorkspaceOpenConfiguration *config=[NSWorkspaceOpenConfiguration configuration];config.activates=YES;
-        [NSWorkspace.sharedWorkspace openApplicationAtURL:url configuration:config completionHandler:^(NSRunningApplication *app,NSError *error){
-            (void)app;if(error)dispatch_async(dispatch_get_main_queue(),^{
-                input_enable(false);NSAlert *alert=[NSAlert new];alert.messageText=@"Impossibile aprire l’applicazione";
-                alert.informativeText=@"L’app potrebbe essere stata spostata o rimossa. Selezionala nuovamente nelle impostazioni di Punto.";[alert runModal];
-            });
-        }];
-    }
+    if(action==11)[self launchApplication:[d stringForKey:[self pathKey:index]]];
     return YES;
+}
+- (NSString *)launcherKey:(NSInteger)direction {return [NSString stringWithFormat:@"launcherApps%ld",(long)direction];}
+- (NSArray<NSString *> *)launcherApps:(NSInteger)direction {
+    NSArray *stored=[NSUserDefaults.standardUserDefaults arrayForKey:[self launcherKey:direction]];
+    NSMutableArray *apps=[@[@"",@""] mutableCopy];
+    for(NSUInteger i=0;i<MIN((NSUInteger)2,stored.count);i++)if([stored[i] isKindOfClass:NSString.class])apps[i]=stored[i];
+    return apps;
+}
+- (void)configureLauncherDirection:(NSInteger)direction slot:(NSInteger)slot {
+    if(direction<0||direction>3||slot<0||slot>1)return;
+    input_enable(false);
+    NSOpenPanel *panel=[NSOpenPanel openPanel];panel.title=@"Scegli un’app per il Launcher";
+    panel.canChooseFiles=YES;panel.canChooseDirectories=NO;panel.allowsMultipleSelection=NO;
+    panel.allowedContentTypes=@[UTTypeApplicationBundle];panel.treatsFilePackagesAsDirectories=NO;panel.directoryURL=[NSURL fileURLWithPath:@"/Applications"];
+    if([panel runModal]!=NSModalResponseOK||![panel.URL.pathExtension.lowercaseString isEqualToString:@"app"])return;
+    NSMutableArray *apps=[[self launcherApps:direction] mutableCopy];apps[slot]=panel.URL.path;
+    [NSUserDefaults.standardUserDefaults setObject:apps forKey:[self launcherKey:direction]];
+}
+- (void)clearLauncherDirection:(NSInteger)direction slot:(NSInteger)slot {
+    if(direction<0||direction>3||slot<0||slot>1)return;input_enable(false);
+    NSMutableArray *apps=[[self launcherApps:direction] mutableCopy];apps[slot]=@"";
+    [NSUserDefaults.standardUserDefaults setObject:apps forKey:[self launcherKey:direction]];
+}
+- (void)selectLauncherDirection:(NSInteger)direction {
+    if(direction<0||direction>3||!input_enabled())return;
+    if(!_launcher.visible)input_release_actions();
+    bool available[4][2];
+    for(int i=0;i<4;i++){NSArray *apps=[self launcherApps:i];for(int j=0;j<2;j++)available[i][j]=[apps[j] length]>0;}
+    launcher_select(&_launcher,(int)direction,available);
+    input_suppress_pointer(true);
+    if(!self.launcherPanel)self.launcherPanel=[PadMacUI makeLauncherWithController:self];
+    [self.launcherPanel center];[self.launcherPanel orderFrontRegardless];
+}
+- (void)confirmLauncher {
+    if(!_launcher.visible||_launcher.direction<0||_launcher.slot<0)return;
+    NSString *path=[self launcherApps:_launcher.direction][_launcher.slot];
+    if(!path.length){NSBeep();return;}
+    [self hideLauncher];[self launchApplication:path];
+}
+- (void)hideLauncher {
+    launcher_reset(&_launcher);[self.launcherPanel orderOut:nil];
+    self.launcherPanel.contentView=nil;self.launcherPanel=nil;input_suppress_pointer(false);
+}
+- (void)launchApplication:(NSString *)path {
+    if(!path.length)return;
+    NSWorkspaceOpenConfiguration *config=[NSWorkspaceOpenConfiguration configuration];config.activates=YES;
+    [NSWorkspace.sharedWorkspace openApplicationAtURL:[NSURL fileURLWithPath:path] configuration:config completionHandler:^(NSRunningApplication *app,NSError *error){
+        (void)app;if(error)dispatch_async(dispatch_get_main_queue(),^{
+            input_enable(false);NSAlert *alert=[NSAlert new];alert.messageText=@"Impossibile aprire l’applicazione";
+            alert.informativeText=@"L’app potrebbe essere stata spostata o rimossa. Selezionala nuovamente nelle impostazioni di Punto.";[alert runModal];
+        });
+    }];
 }
 - (void)tick:(NSTimer *)timer {
     (void)timer;double now=NSProcessInfo.processInfo.systemUptime,dt=MIN(0.04,now-self.lastTime);self.lastTime=now;
     if(input_enabled()&&!AXIsProcessTrusted())input_enable(false);
-    if(input_enabled())longpress_tick(now,hold_event);
+    if(input_enabled()&&!_launcher.visible)longpress_tick(now,hold_event);
     input_tick(dt,self.speed,self.deadzone);
 }
 - (void)toggleControl {
@@ -167,6 +231,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 - (void)toggle:(id)sender {(void)sender;[self toggleControl];}
 - (void)show:(id)sender {
     (void)sender;
+    [self hideLauncher];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     if(self.window.isMiniaturized)[self.window deminiaturize:nil];
     [self.window makeKeyAndOrderFront:nil];

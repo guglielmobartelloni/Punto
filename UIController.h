@@ -8,5 +8,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)assignAction:(NSInteger)action forButton:(NSInteger)index;
 - (void)recordHoldForButton:(NSInteger)index;
 - (void)removeHoldForButton:(NSInteger)index;
+- (void)configureLauncherDirection:(NSInteger)direction slot:(NSInteger)slot;
+- (void)clearLauncherDirection:(NSInteger)direction slot:(NSInteger)slot;
+- (void)selectLauncherDirection:(NSInteger)direction;
+- (void)confirmLauncher;
+- (void)hideLauncher;
 @end
 NS_ASSUME_NONNULL_END

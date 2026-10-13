@@ -36,7 +36,8 @@ int main(void){
     reset();
     keyboard_hold(-1,1,chord,true);keyboard_hold(19,1,chord,true);keyboard_hold(0,128,chord,true);
     keyboard_hold(0,-1,0,true);assert(count==0);
-    keyboard_hold(0,-1,chord,true);input_enable(false);assert(current_flags()==0);
+    keyboard_hold(0,-1,chord,true);input_suppress_pointer(true);assert(pointerSuppressed);
+    input_enable(false);assert(current_flags()==0&&!pointerSuppressed);
     keyboard_hold(0,-1,chord,true);
     active=(IOHIDDeviceRef)(uintptr_t)1;removed(NULL,kIOReturnSuccess,NULL,active);
     assert(current_flags()==0 && !input_connected());

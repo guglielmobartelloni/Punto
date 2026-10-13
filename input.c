@@ -11,6 +11,8 @@ static uint8_t reportBuffer[512];
 static bool touching;
 static int touchX, touchY, touchID;
 static void move_pointer(double dx, double dy);
+static bool pointerSuppressed;
+void input_suppress_pointer(bool suppressed){pointerSuppressed=suppressed;touching=false;}
 static bool enabled, held[2]; // Left mouse (R2), right mouse (L2).
 static bool buttons[19];
 static InputButtonHandler buttonHandler;
@@ -25,12 +27,15 @@ static void mouse(CGEventType type, CGMouseButton button) {
     CGEventRef e=CGEventCreateMouseEvent(NULL,type,position(),button);
     if(e){CGEventPost(kCGHIDEventTap,e);CFRelease(e);}
 }
-void input_enable(bool on) {
+void input_release_actions(void) {
     keyboard_release_all();
     if(buttonHandler)buttonHandler(-1,false);
     if(held[0]) mouse(kCGEventLeftMouseUp,kCGMouseButtonLeft);
     if(held[1]) mouse(kCGEventRightMouseUp,kCGMouseButtonRight);
-    held[0]=held[1]=false; enabled=on; x=y=0; touching=false;
+    held[0]=held[1]=false;touching=false;
+}
+void input_enable(bool on) {
+    input_release_actions();pointerSuppressed=false;enabled=on;x=y=0;
 }
 void input_mapping(int i,int key,unsigned long long mods) {if(i>=0&&i<4){keys[i]=key;flags[i]=mods;}}
 void input_modifier_shortcut(unsigned long long modifiers){
@@ -146,7 +151,7 @@ void input_tick(double dt,double speed,double dz){
     move_pointer(x/r*magnitude*speed*dt,y/r*magnitude*speed*dt);
 }
 static void move_pointer(double dx,double dy){
-    if(!enabled || !active)return;
+    if(!enabled || !active || pointerSuppressed)return;
     CGPoint p=position();p.x+=dx;p.y+=dy;
     // Clamp to the union of active displays, including monitors with negative coordinates.
     CGDirectDisplayID displays[32];uint32_t count=0;CGRect bounds=CGRectNull;
