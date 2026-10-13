@@ -13,9 +13,9 @@ struct PuntoLauncherView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                RoundedRectangle(cornerRadius: 22).fill(.ultraThinMaterial)
-                RoundedRectangle(cornerRadius: 22).fill(Color.black.opacity(0.40))
-                RoundedRectangle(cornerRadius: 22).stroke(Color.white.opacity(0.12), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16).fill(.ultraThinMaterial)
+                RoundedRectangle(cornerRadius: 16).fill(Color.black.opacity(0.40))
+                RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.12), lineWidth: 1)
                 VStack {
                     HStack {
                         Text("PUNTO").font(.system(size: 10, weight: .semibold)).tracking(2)
@@ -23,55 +23,55 @@ struct PuntoLauncherView: View {
                         Text("LAUNCHER").font(.system(size: 10, weight: .medium)).tracking(2).foregroundColor(.white.opacity(0.45))
                     }
                     Spacer()
-                    HStack(spacing: 24) {
-                        Label("Apertura automatica", systemImage: "bolt.fill").foregroundColor(.white.opacity(0.55))
+                    HStack(spacing: 12) {
+                        Label("Auto", systemImage: "bolt.fill").foregroundColor(.white.opacity(0.55))
                         Button { model.controller.hideLauncher() } label: {
                             HStack(spacing: 7) { Text("○"); Text("Chiudi") }
                         }
                         Spacer()
-                        Text("Ripremi la stessa freccia per cambiare app")
-                            .font(.system(size: 10)).foregroundColor(.white.opacity(0.45))
-                    }.font(.system(size: 12, weight: .medium)).buttonStyle(.plain)
-                }.padding(26)
+                        Text("Stessa freccia: cambia app")
+                            .font(.system(size: 9)).foregroundColor(.white.opacity(0.45))
+                    }.font(.system(size: 10, weight: .medium)).buttonStyle(.plain)
+                }.padding(18)
                 direction(0).position(x: geometry.size.width / 2, y: geometry.size.height * 0.20)
                 direction(1).position(x: geometry.size.width * 0.81, y: geometry.size.height / 2)
                 direction(2).position(x: geometry.size.width / 2, y: geometry.size.height * 0.80)
                 direction(3).position(x: geometry.size.width * 0.19, y: geometry.size.height / 2)
-                VStack(spacing: 12) {
-                    Image(systemName: "gamecontroller").font(.system(size: 26, weight: .light)).foregroundColor(.white.opacity(0.65))
+                VStack(spacing: 8) {
+                    Image(systemName: "gamecontroller").font(.system(size: 20, weight: .light)).foregroundColor(.white.opacity(0.65))
                     if selectedPath.isEmpty {
-                        Text("Nessuna app").font(.system(size: 13, weight: .medium))
+                        Text("Nessuna app").font(.system(size: 11, weight: .medium))
                         Text("Assegna le app nella\nsezione Launcher")
-                            .font(.system(size: 10)).foregroundColor(.white.opacity(0.45)).multilineTextAlignment(.center).lineSpacing(3)
+                            .font(.system(size: 9)).foregroundColor(.white.opacity(0.45)).multilineTextAlignment(.center).lineSpacing(2)
                     } else {
-                        Text(FileManager.default.displayName(atPath: selectedPath)).font(.system(size: 14, weight: .medium)).lineLimit(2).multilineTextAlignment(.center)
-                        Text("APERTURA AUTOMATICA").font(.system(size: 8, weight: .semibold)).tracking(1.3).foregroundColor(.white.opacity(0.45))
+                        Text(FileManager.default.displayName(atPath: selectedPath)).font(.system(size: 12, weight: .medium)).lineLimit(2).multilineTextAlignment(.center)
+                        Text("APERTA").font(.system(size: 8, weight: .semibold)).tracking(1).foregroundColor(.white.opacity(0.45))
                     }
-                }.frame(width: 160).position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                }.frame(width: 110).position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             }
         }.foregroundColor(.white).preferredColorScheme(.dark)
             .animation(.easeOut(duration: 0.12), value: model.launcherDirection)
             .animation(.easeOut(duration: 0.12), value: model.launcherSlot)
     }
     private func direction(_ index: Int) -> some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 6) {
-                Text(arrows[index]).font(.system(size: 15, weight: .medium))
+        VStack(spacing: 6) {
+            HStack(spacing: 5) {
+                Text(arrows[index]).font(.system(size: 12, weight: .medium))
                 Text(names[index].uppercased()).font(.system(size: 9, weight: .medium)).tracking(1.5)
             }.foregroundColor(model.launcherDirection == index ? coral : .white.opacity(0.45))
-            HStack(spacing: 10) {
+            HStack(spacing: 7) {
                 ForEach(0..<2, id: \.self) { slot in
                     let path = model.launcherApps[index][slot]
                     let selected = model.launcherDirection == index && model.launcherSlot == slot
-                    VStack(spacing: 7) {
+                    VStack(spacing: 5) {
                         if path.isEmpty {
-                            Image(systemName: "plus.app").font(.system(size: 32, weight: .ultraLight)).foregroundColor(.white.opacity(0.25)).frame(height: 38)
+                            Image(systemName: "plus.app").font(.system(size: 25, weight: .ultraLight)).foregroundColor(.white.opacity(0.25)).frame(height: 28)
                         } else {
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().scaledToFit().frame(width: 38, height: 38)
+                            Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().scaledToFit().frame(width: 28, height: 28)
                         }
                         Text(path.isEmpty ? "Slot libero" : FileManager.default.displayName(atPath: path))
-                            .font(.system(size: 10, weight: selected ? .semibold : .regular)).lineLimit(1).foregroundColor(path.isEmpty ? .white.opacity(0.35) : .white.opacity(0.90))
-                    }.frame(width: 99, height: 86)
+                            .font(.system(size: 9, weight: selected ? .semibold : .regular)).lineLimit(1).foregroundColor(path.isEmpty ? .white.opacity(0.35) : .white.opacity(0.90))
+                    }.frame(width: 68, height: 62)
                         .background(selected ? coral.opacity(0.16) : .white.opacity(0.04))
                         .clipShape(RoundedRectangle(cornerRadius: 9))
                         .overlay(RoundedRectangle(cornerRadius: 9).stroke(selected ? coral : .white.opacity(0.09), lineWidth: selected ? 1.5 : 1))
@@ -80,6 +80,6 @@ struct PuntoLauncherView: View {
                         }
                 }
             }
-        }.frame(width: 230)
+        }.frame(width: 152)
     }
 }

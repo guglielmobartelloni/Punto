@@ -32,6 +32,8 @@ int main(void){@autoreleasepool{
     assert([delegate.launchedPath isEqualToString:up[0]]); // Immediate automatic launch.
     assert(application.activationPolicy==NSApplicationActivationPolicyAccessory);
     assert(delegate.launcherPanel.isVisible); // Overlay alone must not add a Dock icon.
+    assert(delegate.launcherPanel.contentView.bounds.size.width<=560);
+    assert(delegate.launcherPanel.contentView.bounds.size.height<=400);
     assert([delegate handleButton:15 pressed:NO]);
     [delegate handleButton:15 pressed:YES];
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==1);

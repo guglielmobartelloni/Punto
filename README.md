@@ -45,7 +45,7 @@ Con il controllo attivo:
 
 L’apertura avviene direttamente alla pressione della freccia, non al rilascio e non dopo una conferma. Mantenere premuta una freccia non ripete la navigazione: occorre rilasciarla e ripremerla. Mentre l’overlay è aperto, gli altri pulsanti vengono consumati e joystick/touchpad non muovono il mouse. All’apertura vengono rilasciate eventuali shortcut/click mantenuti e cancellate le pressioni lunghe in attesa. Alla chiusura si ripristina il controllo normale.
 
-L’overlay è un pannello non attivante: non ruba il focus alla finestra in uso, non porta la configurazione in primo piano e da solo non aggiunge l’app al Dock. Non usa asset di videogiochi. `LauncherUI.swift` contiene la vista e `launcher.c` la macchina a stati di selezione.
+L’overlay è compatto (massimo 560 × 400 punti), con icone da 28 punti e due slot per direzione. È un pannello non attivante: non ruba il focus alla finestra in uso, non porta la configurazione in primo piano e da solo non aggiunge l’app al Dock. Non usa asset di videogiochi. `LauncherUI.swift` contiene la vista e `launcher.c` la macchina a stati di selezione.
 
 ## Limiti attuali
 
