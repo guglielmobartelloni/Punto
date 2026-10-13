@@ -65,6 +65,7 @@ final class SettingsModel: ObservableObject {
     @Published var trusted = false
     @Published var speed = 1100.0
     @Published var deadzone = 0.12
+    @Published var scrollSpeed = 900.0
     @Published var buttons: [ButtonSetting] = []
     @Published var theme = Theme.dark
     @Published var launcherApps: [[String]] = Array(repeating: ["", ""], count: 4)
@@ -92,6 +93,7 @@ final class SettingsModel: ObservableObject {
         trusted = raw["trusted"] as? Bool ?? false
         speed = raw["speed"] as? Double ?? 1100
         deadzone = raw["deadzone"] as? Double ?? 0.12
+        scrollSpeed = raw["scrollSpeed"] as? Double ?? 900
         launcherVisible = raw["launcherVisible"] as? Bool ?? false
         launcherDirection = raw["launcherDirection"] as? Int ?? -1
         launcherSlot = raw["launcherSlot"] as? Int ?? -1
@@ -111,6 +113,7 @@ final class SettingsModel: ObservableObject {
     func toggle() { controller.toggleControl(); refresh() }
     func setSpeed(_ value: Double) { speed = (value / 25).rounded() * 25; controller.setMouseSpeed(speed, deadzone: deadzone) }
     func setDeadzone(_ value: Double) { deadzone = (value * 100).rounded() / 100; controller.setMouseSpeed(speed, deadzone: deadzone) }
+    func setScrollSpeed(_ value: Double) { scrollSpeed = (value / 25).rounded() * 25; controller.setScrollSpeed(scrollSpeed) }
     func assign(_ action: Int, to id: Int) { controller.assignAction(action, forButton: id); refresh() }
     func recordHold(_ id: Int) { controller.recordHold(forButton: id); refresh() }
     func removeHold(_ id: Int) { controller.removeHold(forButton: id); refresh() }
@@ -440,12 +443,14 @@ private struct SettingsView: View {
                 }
             }.padding(20).card(radius: 8)
             heading("Scroll con R1", detail: "Mantieni premuto R1: il joystick destro scorre in verticale e orizzontale senza muovere il cursore.")
-            HStack(spacing: 12) {
-                Image(systemName: "arrow.up.arrow.down").foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 17) {
+                sliderSetting("Sensibilità scroll", description: "Velocità massima, indipendente da quella del cursore", value: String(format: "%.0f px/s", model.scrollSpeed)) {
+                    Slider(value: Binding(get: { model.scrollSpeed }, set: model.setScrollSpeed), in: 100...3000)
+                }
+                Divider()
                 Text("Rilascia R1 per tornare al mouse. La zona morta si applica anche allo scroll.")
                     .font(.system(size: 11)).foregroundColor(.secondary)
-                Spacer()
-            }.padding(18).card(radius: 8)
+            }.padding(20).card(radius: 8)
             heading("Touchpad", detail: "Scorri un dito per muovere il mouse. Sollevalo per riposizionarlo.")
             HStack {
                 Text("Sensibilità").font(.system(size: 12))

@@ -16,6 +16,11 @@ void input_suppress_pointer(bool suppressed){pointerSuppressed=suppressed;touchi
 static bool enabled, held[2]; // Left mouse (R2), right mouse (L2).
 static bool scrollMode;
 static double scrollRemainderX,scrollRemainderY;
+static double scrollSpeed=900;
+void input_set_scroll_speed(double speed){
+    if(!isfinite(speed))return;
+    scrollSpeed=fmax(100,fmin(3000,speed));scrollRemainderX=scrollRemainderY=0;
+}
 void input_scroll_mode(bool on){
     on=on&&enabled;
     if(scrollMode!=on){scrollMode=on;scrollRemainderX=scrollRemainderY=0;}
@@ -159,8 +164,8 @@ void input_tick(double dt,double speed,double dz){
     if(scrollMode){
         // Core Graphics positive scroll deltas move up/left. Preserve sub-pixel
         // remainders for smooth slow scrolling at the 120 Hz input tick rate.
-        scrollRemainderX-=x/r*magnitude*900*dt;
-        scrollRemainderY-=y/r*magnitude*900*dt;
+        scrollRemainderX-=x/r*magnitude*scrollSpeed*dt;
+        scrollRemainderY-=y/r*magnitude*scrollSpeed*dt;
         int horizontal=(int)trunc(scrollRemainderX),vertical=(int)trunc(scrollRemainderY);
         scrollRemainderX-=horizontal;scrollRemainderY-=vertical;
         if(vertical||horizontal){

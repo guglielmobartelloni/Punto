@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#include <math.h>
 #import <ApplicationServices/ApplicationServices.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import "input.h"
@@ -20,6 +21,7 @@
 @property double lastTime;
 @property double speed;
 @property double deadzone;
+@property(nonatomic) double scrollSpeed;
 - (BOOL)handleButton:(int)index pressed:(BOOL)pressed;
 - (void)holdEvent:(int)index event:(HoldEvent)event;
 @end
@@ -36,7 +38,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 - (void)applicationDidFinishLaunching:(NSNotification *)note {
     (void)note;currentApp=self;
     NSUserDefaults *d=NSUserDefaults.standardUserDefaults;PadMacMigrateShortcuts(d);
-    [d registerDefaults:@{@"speed":@1100,@"zone":@0.12}];
+    [d registerDefaults:@{@"speed":@1100,@"zone":@0.12,@"scrollSpeed":@900}];
     launcher_reset(&_launcher);
     for(int direction=0;direction<4;direction++){
         NSString *key=[self launcherKey:direction];int button=15+direction;
@@ -47,6 +49,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     }
     self.speed=MAX(200,MIN(2600,[d doubleForKey:@"speed"]));
     self.deadzone=MAX(0.03,MIN(0.4,[d doubleForKey:@"zone"]));
+    self.scrollSpeed=MAX(100,MIN(3000,[d doubleForKey:@"scrollSpeed"]));
     self.item=[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
     self.item.button.image=[NSImage imageWithSystemSymbolName:@"gamecontroller.fill" accessibilityDescription:@"Punto"];
     NSMenu *menu=[NSMenu new];
@@ -83,13 +86,18 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     }
     NSMutableArray *directions=[NSMutableArray new];
     for(int i=0;i<4;i++)[directions addObject:[self launcherApps:i]];
-    return @{@"connected":@(input_connected()),@"enabled":@(input_enabled()),@"trusted":@(AXIsProcessTrusted()),@"speed":@(self.speed),@"deadzone":@(self.deadzone),@"buttons":rows,
+    return @{@"connected":@(input_connected()),@"enabled":@(input_enabled()),@"trusted":@(AXIsProcessTrusted()),@"speed":@(self.speed),@"deadzone":@(self.deadzone),@"scrollSpeed":@(self.scrollSpeed),@"buttons":rows,
              @"launcherApps":directions,@"launcherVisible":@(_launcher.visible),@"launcherDirection":@(_launcher.direction),@"launcherSlot":@(_launcher.slot)};
 }
 - (void)setMouseSpeed:(double)speed deadzone:(double)deadzone {
     self.speed=MAX(200,MIN(2600,speed));self.deadzone=MAX(0.03,MIN(0.4,deadzone));
     NSUserDefaults *d=NSUserDefaults.standardUserDefaults;
     [d setDouble:self.speed forKey:@"speed"];[d setDouble:self.deadzone forKey:@"zone"];
+}
+- (void)setScrollSpeed:(double)speed {
+    if(!isfinite(speed))return;
+    _scrollSpeed=MAX(100,MIN(3000,speed));input_set_scroll_speed(_scrollSpeed);
+    [NSUserDefaults.standardUserDefaults setDouble:_scrollSpeed forKey:@"scrollSpeed"];
 }
 - (void)assignAction:(NSInteger)action forButton:(NSInteger)index {
     if(![self validButton:index] || (action!=0&&action!=10&&action!=11&&action!=12))return;
