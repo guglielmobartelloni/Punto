@@ -11,8 +11,23 @@ int main(void){@autoreleasepool{
     assert([PadMacShortcutFromEvent(event(53,0,@"",NO))[@"label"] isEqualToString:@"Esc"]);
     assert([PadMacShortcutFromEvent(event(123,NSEventModifierFlagControl|NSEventModifierFlagOption,@"",NO))[@"label"] isEqualToString:@"⌃⌥←"]);
     assert([PadMacShortcutFromEvent(event(122,0,@"",NO))[@"label"] isEqualToString:@"F1"]);
+    assert([PadMacShortcutFromEvent(event(49,NSEventModifierFlagShift,@" ",NO))[@"label"] isEqualToString:@"⇧Space"]);
+    assert([PadMacShortcutFromEvent(event(76,0,@"",NO))[@"label"] isEqualToString:@"Keypad Enter"]);
+    assert([PadMacShortcutFromEvent(event(119,0,@"",NO))[@"label"] isEqualToString:@"End"]);
+    assert([PadMacShortcutFromEvent(event(116,0,@"",NO))[@"label"] isEqualToString:@"Page Up"]);
+    assert([PadMacShortcutFromEvent(event(121,0,@"",NO))[@"label"] isEqualToString:@"Page Down"]);
     assert(!PadMacShortcutFromEvent(event(55,NSEventModifierFlagCommand,@"",NO)));
     assert(!PadMacShortcutFromEvent(event(1,0,@"s",YES)));
+    assert([PadMacShortcutLabel(@{@"label":@"⌥⇧Spazio"}) isEqualToString:@"⌥⇧Space"]);
+    assert([PadMacShortcutLabel(@{@"label":@"⌘Pagina giù"}) isEqualToString:@"⌘Page Down"]);
+    assert([PadMacShortcutLabel(@{@"label":@"Tasto 99"}) isEqualToString:@"Key 99"]);
+    assert([PadMacShortcutLabel(@{@"label":@"⌥⇧"}) isEqualToString:@"⌥⇧"]);
+    assert(PadMacShortcutLabel(nil)==nil);
+    NSDictionary *legacyShortcut=@{@"keycode":@49,@"modifiers":@(NSEventModifierFlagOption),@"label":@"⌥Spazio"};
+    assert([PadMacShortcutLabel(legacyShortcut) isEqualToString:@"⌥Space"]);
+    assert([legacyShortcut[@"label"] isEqualToString:@"⌥Spazio"]);
+    assert([legacyShortcut[@"keycode"] intValue]==49);
+    assert([legacyShortcut[@"modifiers"] unsignedLongLongValue]==NSEventModifierFlagOption);
     NSEvent *chord=[NSEvent keyEventWithType:NSEventTypeFlagsChanged location:NSZeroPoint modifierFlags:NSEventModifierFlagOption|NSEventModifierFlagShift timestamp:0 windowNumber:0 context:nil characters:@"" charactersIgnoringModifiers:@"" isARepeat:NO keyCode:56];
     NSDictionary *modifiersOnly=PadMacShortcutFromEvent(chord);
     assert([modifiersOnly[@"keycode"] intValue]==-1);
@@ -33,5 +48,5 @@ int main(void){@autoreleasepool{
     [d setObject:@{@"keycode":@1,@"modifiers":@0,@"label":@"S"} forKey:@"shortcut0"];
     PadMacMigrateShortcuts(d);assert([[d dictionaryForKey:@"shortcut0"][@"label"] isEqualToString:@"S"]);
     [d removePersistentDomainForName:suite];
-    puts("PASS: arbitrary combinations, special keys, ignored repeats/modifiers, preference migration");
+    puts("PASS: arbitrary combinations, special keys, ignored repeats/modifiers, English legacy labels, preference migration");
 }return 0;}

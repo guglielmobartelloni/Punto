@@ -53,9 +53,9 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     self.item=[[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
     self.item.button.image=[NSImage imageWithSystemSymbolName:@"gamecontroller.fill" accessibilityDescription:@"Punto"];
     NSMenu *menu=[NSMenu new];
-    NSMenuItem *settings=[[NSMenuItem alloc] initWithTitle:@"Impostazioni Punto…" action:@selector(show:) keyEquivalent:@""];settings.target=self;[menu addItem:settings];
-    NSMenuItem *toggle=[[NSMenuItem alloc] initWithTitle:@"Attiva / sospendi" action:@selector(toggle:) keyEquivalent:@""];toggle.target=self;[menu addItem:toggle];
-    [menu addItem:[NSMenuItem separatorItem]];[menu addItemWithTitle:@"Esci" action:@selector(terminate:) keyEquivalent:@"q"];self.item.menu=menu;
+    NSMenuItem *settings=[[NSMenuItem alloc] initWithTitle:@"Punto Settings…" action:@selector(show:) keyEquivalent:@""];settings.target=self;[menu addItem:settings];
+    NSMenuItem *toggle=[[NSMenuItem alloc] initWithTitle:@"Enable / Pause" action:@selector(toggle:) keyEquivalent:@""];toggle.target=self;[menu addItem:toggle];
+    [menu addItem:[NSMenuItem separatorItem]];[menu addItemWithTitle:@"Quit Punto" action:@selector(terminate:) keyEquivalent:@"q"];self.item.menu=menu;
     self.window=[PadMacUI makeWindowWithController:self];self.window.delegate=self;
     input_button_handler(handle_button);input_start();self.lastTime=NSProcessInfo.processInfo.systemUptime;
     self.timer=[NSTimer scheduledTimerWithTimeInterval:1.0/120 target:self selector:@selector(tick:) userInfo:nil repeats:YES];
@@ -64,23 +64,23 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 }
 - (NSDictionary *)settingsSnapshot {
     NSUserDefaults *d=NSUserDefaults.standardUserDefaults;
-    NSArray *names=@[@"Quadrato",@"Croce",@"Cerchio",@"Triangolo",@"Dorsale L1",@"Dorsale R1",@"Grilletto L2",@"Grilletto R2",@"Create",@"Options",@"Joystick sinistro · L3",@"Joystick destro · R3",@"Pulsante PS",@"Click touchpad",@"Mute",@"Freccia su",@"Freccia destra",@"Freccia giù",@"Freccia sinistra"];
+    NSArray *names=@[@"Square",@"Cross",@"Circle",@"Triangle",@"Left bumper · L1",@"Right bumper · R1",@"Left trigger · L2",@"Right trigger · R2",@"Create",@"Options",@"Left stick · L3",@"Right stick · R3",@"PS button",@"Touchpad click",@"Mute",@"D-pad up",@"D-pad right",@"D-pad down",@"D-pad left"];
     NSArray *glyphs=@[@"□",@"✕",@"○",@"△",@"L1",@"R1",@"L2",@"R2",@"≡",@"…",@"L3",@"R3",@"PS",@"▭",@"◌",@"↑",@"→",@"↓",@"←"];
     NSMutableArray *rows=[NSMutableArray new];
     for(int i=0;i<19;i++){
         if(i==9)continue;
         NSInteger action=[d integerForKey:[self actionKey:i]];
-        NSString *group=i<4?@"Simboli":i<8?@"Dorsali":i>=15?@"Frecce":@"Altri pulsanti";
-        NSString *primary=@"Nessuna azione";
+        NSString *group=i<4?@"Symbols":i<8?@"Shoulders":i>=15?@"D-pad":@"Other buttons";
+        NSString *primary=@"No action";
         NSDictionary *shortcut=[d dictionaryForKey:[self shortcutKey:i]],*hold=[d dictionaryForKey:[self holdKey:i]];
         NSString *path=[d stringForKey:[self pathKey:i]];
-        if(action==0&&i==6)primary=@"Click destro";
-        if(action==0&&i==7)primary=@"Click sinistro";
-        if(action==12)primary=shortcut[@"label"]?:@"Registra shortcut";
-        if(action==11)primary=path.length?[NSFileManager.defaultManager displayNameAtPath:path]:@"Scegli applicazione";
-        if(i==5){action=13;primary=@"Joystick destro → scroll";}
+        if(action==0&&i==6)primary=@"Right click";
+        if(action==0&&i==7)primary=@"Left click";
+        if(action==12)primary=PadMacShortcutLabel(shortcut)?:@"Record shortcut";
+        if(action==11)primary=path.length?[NSFileManager.defaultManager displayNameAtPath:path]:@"Choose application";
+        if(i==5){action=13;primary=@"Right stick → scroll";}
         NSMutableDictionary *row=[@{@"id":@(i),@"name":names[i],@"glyph":glyphs[i],@"group":group,@"action":@(action),@"primary":primary} mutableCopy];
-        if(i!=5&&hold[@"label"])row[@"hold"]=hold[@"label"];
+        if(i!=5&&hold[@"label"])row[@"hold"]=PadMacShortcutLabel(hold);
         if(action==11&&path.length)row[@"appPath"]=path;
         [rows addObject:row];
     }
@@ -107,7 +107,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
         if(!shortcut)return;[d setObject:shortcut forKey:[self shortcutKey:index]];
     }
     if(action==11){
-        NSOpenPanel *panel=[NSOpenPanel openPanel];panel.title=@"Scegli l’applicazione da richiamare";
+        NSOpenPanel *panel=[NSOpenPanel openPanel];panel.title=@"Choose an application";panel.prompt=@"Choose";
         panel.canChooseFiles=YES;panel.canChooseDirectories=NO;panel.allowsMultipleSelection=NO;
         panel.allowedContentTypes=@[UTTypeApplicationBundle];panel.treatsFilePackagesAsDirectories=NO;panel.directoryURL=[NSURL fileURLWithPath:@"/Applications"];
         if([panel runModal]!=NSModalResponseOK)return;
@@ -174,7 +174,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 - (void)configureLauncherDirection:(NSInteger)direction slot:(NSInteger)slot {
     if(direction<0||direction>3||slot<0||slot>1)return;
     input_enable(false);
-    NSOpenPanel *panel=[NSOpenPanel openPanel];panel.title=@"Scegli un’app per il Launcher";
+    NSOpenPanel *panel=[NSOpenPanel openPanel];panel.title=@"Choose an app for the Launcher";panel.prompt=@"Choose";
     panel.canChooseFiles=YES;panel.canChooseDirectories=NO;panel.allowsMultipleSelection=NO;
     panel.allowedContentTypes=@[UTTypeApplicationBundle];panel.treatsFilePackagesAsDirectories=NO;panel.directoryURL=[NSURL fileURLWithPath:@"/Applications"];
     if([panel runModal]!=NSModalResponseOK||![panel.URL.pathExtension.lowercaseString isEqualToString:@"app"])return;
@@ -208,8 +208,8 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     NSWorkspaceOpenConfiguration *config=[NSWorkspaceOpenConfiguration configuration];config.activates=YES;
     [NSWorkspace.sharedWorkspace openApplicationAtURL:[NSURL fileURLWithPath:path] configuration:config completionHandler:^(NSRunningApplication *app,NSError *error){
         (void)app;if(error)dispatch_async(dispatch_get_main_queue(),^{
-            input_enable(false);NSAlert *alert=[NSAlert new];alert.messageText=@"Impossibile aprire l’applicazione";
-            alert.informativeText=@"L’app potrebbe essere stata spostata o rimossa. Selezionala nuovamente nelle impostazioni di Punto.";[alert runModal];
+            input_enable(false);NSAlert *alert=[NSAlert new];alert.messageText=@"Unable to open application";
+            alert.informativeText=@"The app may have been moved or removed. Select it again in Punto settings.";[alert runModal];
         });
     }];
 }
@@ -223,12 +223,12 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 - (void)toggleControl {
     if(input_enabled()){input_enable(false);return;}
     if(!AXIsProcessTrusted()){
-        NSAlert *alert=[NSAlert new];alert.messageText=@"Permesso Accessibilità necessario";
-        alert.informativeText=@"Abilita Punto in Impostazioni di Sistema → Privacy e sicurezza → Accessibilità.";[alert runModal];[self openAccessibility];return;
+        NSAlert *alert=[NSAlert new];alert.messageText=@"Accessibility permission required";
+        alert.informativeText=@"Enable Punto in System Settings → Privacy & Security → Accessibility.";[alert runModal];[self openAccessibility];return;
     }
     if(!input_connected()){
-        NSAlert *alert=[NSAlert new];alert.messageText=@"DualSense non rilevato";
-        alert.informativeText=@"Collega il controller con un cavo USB dati oppure abbinalo nelle impostazioni Bluetooth tenendo premuti PS + Create fino al lampeggio.";[alert runModal];return;
+        NSAlert *alert=[NSAlert new];alert.messageText=@"DualSense not detected";
+        alert.informativeText=@"Connect the controller with a USB data cable, or pair it in Bluetooth settings by holding PS + Create until the light flashes.";[alert runModal];return;
     }
     input_enable(true);
 }

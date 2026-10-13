@@ -4,7 +4,7 @@ import AppKit
 struct PuntoLauncherView: View {
     @ObservedObject var model: SettingsModel
     private let coral = Color(red: 0.98, green: 0.36, blue: 0.40)
-    private let names = ["Su", "Destra", "Giù", "Sinistra"]
+    private let names = ["Up", "Right", "Down", "Left"]
     private let arrows = ["↑", "→", "↓", "←"]
     private var selectedPath: String {
         guard (0..<4).contains(model.launcherDirection), (0..<2).contains(model.launcherSlot) else { return "" }
@@ -26,10 +26,10 @@ struct PuntoLauncherView: View {
                     HStack(spacing: 12) {
                         Label("Auto", systemImage: "bolt.fill").foregroundColor(.white.opacity(0.55))
                         Button { model.controller.hideLauncher() } label: {
-                            HStack(spacing: 7) { Text("○"); Text("Chiudi") }
+                            HStack(spacing: 7) { Text("○"); Text("Dismiss") }
                         }
                         Spacer()
-                        Text("Stessa freccia: cambia app")
+                        Text("Same direction: switch app")
                             .font(.system(size: 9)).foregroundColor(.white.opacity(0.45))
                     }.font(.system(size: 10, weight: .medium)).buttonStyle(.plain)
                 }.padding(18)
@@ -40,12 +40,12 @@ struct PuntoLauncherView: View {
                 VStack(spacing: 8) {
                     Image(systemName: "gamecontroller").font(.system(size: 20, weight: .light)).foregroundColor(.white.opacity(0.65))
                     if selectedPath.isEmpty {
-                        Text("Nessuna app").font(.system(size: 11, weight: .medium))
-                        Text("Assegna le app nella\nsezione Launcher")
+                        Text("No app assigned").font(.system(size: 11, weight: .medium))
+                        Text("Choose apps in\nLauncher settings")
                             .font(.system(size: 9)).foregroundColor(.white.opacity(0.45)).multilineTextAlignment(.center).lineSpacing(2)
                     } else {
                         Text(FileManager.default.displayName(atPath: selectedPath)).font(.system(size: 12, weight: .medium)).lineLimit(2).multilineTextAlignment(.center)
-                        Text("APERTA").font(.system(size: 8, weight: .semibold)).tracking(1).foregroundColor(.white.opacity(0.45))
+                        Text("OPENED").font(.system(size: 8, weight: .semibold)).tracking(1).foregroundColor(.white.opacity(0.45))
                     }
                 }.frame(width: 110).position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             }
@@ -69,7 +69,7 @@ struct PuntoLauncherView: View {
                         } else {
                             Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().scaledToFit().frame(width: 28, height: 28)
                         }
-                        Text(path.isEmpty ? "Slot libero" : FileManager.default.displayName(atPath: path))
+                        Text(path.isEmpty ? "Empty slot" : FileManager.default.displayName(atPath: path))
                             .font(.system(size: 9, weight: selected ? .semibold : .regular)).lineLimit(1).foregroundColor(path.isEmpty ? .white.opacity(0.35) : .white.opacity(0.90))
                     }.frame(width: 68, height: 62)
                         .background(selected ? coral.opacity(0.16) : .white.opacity(0.04))

@@ -75,8 +75,6 @@ Choose up to **eight applications**, arranged across up, right, down, and left.
 
 </details>
 
-<sub>The screenshots show the current Italian-language interface.</sub>
-
 ## Controls
 
 | Controller input | Action |
@@ -115,8 +113,8 @@ This repository is private. Cloning requires an authorized GitHub account.
 ### First-time setup
 
 1. Connect the controller. For Bluetooth pairing, hold **PS + Create** until the light flashes, then pair it in macOS settings.
-2. In Punto, open **Permessi → Apri impostazioni Accessibilità** and grant Accessibility permission. Also grant Input Monitoring if macOS requests it.
-3. Configure **Pulsanti** (buttons), **Launcher**, and **Mouse**, then click **Attiva** (enable).
+2. In Punto, open **Permissions → Open Accessibility settings** and grant Accessibility permission. Also grant Input Monitoring if macOS requests it.
+3. Configure **Buttons**, **Launcher**, and **Mouse**, then click **Enable**.
 
 Punto always starts paused. Closing settings leaves it running in the menu bar. It appears in the Dock only while the configuration window is open.
 

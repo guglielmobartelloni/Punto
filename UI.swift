@@ -10,7 +10,7 @@ private let surface = adaptive(.white, NSColor(red: 0.135, green: 0.135, blue: 0
 private let sidebarColor = adaptive(NSColor(white: 0.945, alpha: 1), NSColor(red: 0.12, green: 0.12, blue: 0.135, alpha: 1))
 
 private enum Page: String, CaseIterable, Identifiable {
-    case buttons = "Pulsanti", launcher = "Launcher", mouse = "Mouse", permissions = "Permessi"
+    case buttons = "Buttons", launcher = "Launcher", mouse = "Mouse", permissions = "Permissions"
     var id: String { rawValue }
     var icon: String {
         switch self {
@@ -22,15 +22,15 @@ private enum Page: String, CaseIterable, Identifiable {
     }
     var subtitle: String {
         switch self {
-        case .buttons: return "Assegna applicazioni e shortcut ai pulsanti del controller."
-        case .launcher: return "Quattro direzioni. Due app per direzione."
-        case .mouse: return "Personalizza il movimento del cursore."
-        case .permissions: return "Gestisci l’accesso di Punto al sistema."
+        case .buttons: return "Assign apps and shortcuts to your controller buttons."
+        case .launcher: return "Four directions. Two apps per direction."
+        case .mouse: return "Customize cursor movement and scrolling."
+        case .permissions: return "Manage Punto’s access to your Mac."
         }
     }
 }
 enum Theme: String, CaseIterable {
-    case dark = "Scuro", light = "Chiaro", system = "Sistema"
+    case dark = "Dark", light = "Light", system = "System"
     var appearance: NSAppearance? {
         switch self {
         case .dark: return NSAppearance(named: .darkAqua)
@@ -76,7 +76,9 @@ final class SettingsModel: ObservableObject {
     private var timer: Timer?
     init(controller: PadMacUIController, pollInterval: Double = 0.15) {
         self.controller = controller
-        theme = Theme(rawValue: UserDefaults.standard.string(forKey: "uiTheme") ?? "") ?? .dark
+        let savedTheme = UserDefaults.standard.string(forKey: "uiTheme") ?? ""
+        let legacyThemes = ["Scuro": "Dark", "Chiaro": "Light", "Sistema": "System"]
+        theme = Theme(rawValue: legacyThemes[savedTheme] ?? savedTheme) ?? .dark
         NSApp.appearance = theme.appearance
         refresh()
         let timer = Timer(timeInterval: pollInterval, repeats: true) { [weak self] _ in self?.refresh() }
@@ -104,8 +106,8 @@ final class SettingsModel: ObservableObject {
         buttons = (raw["buttons"] as? [[String: Any]] ?? []).compactMap { row in
             guard let id = row["id"] as? Int, let name = row["name"] as? String else { return nil }
             return ButtonSetting(id: id, name: name, glyph: row["glyph"] as? String ?? "•",
-                                 group: row["group"] as? String ?? "Altri pulsanti", action: row["action"] as? Int ?? 0,
-                                 primary: row["primary"] as? String ?? "Nessuna azione",
+                                 group: row["group"] as? String ?? "Other buttons", action: row["action"] as? Int ?? 0,
+                                 primary: row["primary"] as? String ?? "No action",
                                  hold: row["hold"] as? String, appPath: row["appPath"] as? String)
         }
     }
@@ -155,7 +157,7 @@ private struct SettingsView: View {
     @ObservedObject var model: SettingsModel
     @State private var page: Page = .buttons
     @State private var search = ""
-    @State private var group = "Tutti"
+    @State private var group = "All"
     @State private var showHelp = false
     init(model: SettingsModel) {
         self.model = model
@@ -166,7 +168,7 @@ private struct SettingsView: View {
         }
         if let index = args.firstIndex(of: "--ui-group"), index + 1 < args.count {
             let value = args[index + 1]
-            if ["Tutti", "Simboli", "Dorsali", "Altri pulsanti"].contains(value) { _group = State(initialValue: value) }
+            if ["All", "Symbols", "Shoulders", "Other buttons"].contains(value) { _group = State(initialValue: value) }
         }
     }
     var body: some View {
@@ -197,7 +199,7 @@ private struct SettingsView: View {
                 Text("Punto").font(.system(size: 17, weight: .semibold))
             }.padding(.horizontal, 8)
             VStack(alignment: .leading, spacing: 9) {
-                Text("IMPOSTAZIONI").font(.system(size: 9, weight: .semibold)).tracking(0.8).foregroundColor(.secondary).padding(.horizontal, 10)
+                Text("SETTINGS").font(.system(size: 9, weight: .semibold)).tracking(0.8).foregroundColor(.secondary).padding(.horizontal, 10)
                 VStack(spacing: 3) {
                     ForEach(Page.allCases) { item in
                         Button { page = item } label: {
@@ -219,14 +221,14 @@ private struct SettingsView: View {
                         Text("DualSense").font(.system(size: 11, weight: .medium))
                         HStack(spacing: 5) {
                             Circle().fill(model.connected ? Color.green : Color.secondary).frame(width: 5, height: 5)
-                            Text(model.connected ? "Collegato" : "Non collegato").font(.system(size: 10)).foregroundColor(.secondary)
+                            Text(model.connected ? "Connected" : "Not connected").font(.system(size: 10)).foregroundColor(.secondary)
                         }
                     }
                 }
                 Divider()
                 HStack(spacing: 6) {
                     Text("OPTIONS").font(.system(size: 8, weight: .medium, design: .monospaced)).padding(.horizontal, 5).padding(.vertical, 3).background(Color.primary.opacity(0.06)).cornerRadius(4)
-                    Text("Attiva / sospendi").font(.system(size: 10)).foregroundColor(.secondary)
+                    Text("Enable / pause").font(.system(size: 10)).foregroundColor(.secondary)
                 }
                 Menu {
                     ForEach(Theme.allCases, id: \.self) { theme in
@@ -235,7 +237,7 @@ private struct SettingsView: View {
                         }
                     }
                 } label: {
-                    Label("Tema: \(model.theme.rawValue.lowercased())", systemImage: model.theme == .dark ? "moon" : "sun.max")
+                    Label("Theme: \(model.theme.rawValue.lowercased())", systemImage: model.theme == .dark ? "moon" : "sun.max")
                         .font(.system(size: 10)).foregroundColor(.secondary)
                 }.menuStyle(.borderlessButton).tint(.secondary)
             }.padding(.horizontal, 8)
@@ -251,12 +253,12 @@ private struct SettingsView: View {
             HStack(spacing: 10) {
                 HStack(spacing: 5) {
                     Circle().fill(model.enabled ? Color.green : Color.secondary).frame(width: 5, height: 5)
-                    Text(model.enabled ? "Attivo" : "Sospeso").font(.system(size: 10)).foregroundColor(.secondary)
+                    Text(model.enabled ? "Active" : "Paused").font(.system(size: 10)).foregroundColor(.secondary)
                 }
                 Button(action: model.toggle) {
-                    Label(model.enabled ? "Sospendi" : "Attiva", systemImage: model.enabled ? "pause.fill" : "play.fill")
+                    Label(model.enabled ? "Pause" : "Enable", systemImage: model.enabled ? "pause.fill" : "play.fill")
                         .font(.system(size: 11, weight: .medium)).padding(.horizontal, 3).padding(.vertical, 2)
-                }.buttonStyle(.borderedProminent).controlSize(.regular).help("Attiva o sospendi il controllo del Mac")
+                }.buttonStyle(.borderedProminent).controlSize(.regular).help("Enable or pause controller input")
             }
         }.padding(.horizontal, 24).padding(.top, 46).padding(.bottom, 20)
     }
@@ -265,11 +267,11 @@ private struct SettingsView: View {
             HStack(spacing: 12) {
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass").font(.system(size: 12)).foregroundColor(.secondary)
-                    TextField("Cerca pulsanti, app o shortcut…", text: $search).textFieldStyle(.plain).font(.system(size: 12))
+                    TextField("Search buttons, apps, or shortcuts…", text: $search).textFieldStyle(.plain).font(.system(size: 12))
                     if !search.isEmpty { Button { search = "" } label: { Image(systemName: "xmark.circle.fill").foregroundColor(.secondary) }.buttonStyle(.plain) }
                 }.padding(9).card(radius: 6)
                 Menu {
-                    ForEach(["Tutti", "Simboli", "Dorsali", "Altri pulsanti"], id: \.self) { value in
+                    ForEach(["All", "Symbols", "Shoulders", "Other buttons"], id: \.self) { value in
                         Button { group = value } label: {
                             if value == group { Label(value, systemImage: "checkmark") } else { Text(value) }
                         }
@@ -280,9 +282,9 @@ private struct SettingsView: View {
                 }.menuStyle(.borderlessButton).tint(.primary).frame(width: 143, height: 33).card(radius: 6)
             }.padding(.horizontal, 24).padding(.top, 18).padding(.bottom, 16)
             HStack(spacing: 12) {
-                Text("PULSANTE").frame(width: 180, alignment: .leading)
-                Text("AZIONE PRINCIPALE").frame(maxWidth: .infinity, alignment: .leading)
-                Text("PRESSIONE LUNGA · 0,45 S").frame(maxWidth: .infinity, alignment: .leading)
+                Text("BUTTON").frame(width: 180, alignment: .leading)
+                Text("PRIMARY ACTION").frame(maxWidth: .infinity, alignment: .leading)
+                Text("LONG PRESS · 0.45 S").frame(maxWidth: .infinity, alignment: .leading)
             }.font(.system(size: 9, weight: .medium)).foregroundColor(.secondary)
                 .padding(.horizontal, 38).padding(.bottom, 10)
             ScrollView {
@@ -290,11 +292,11 @@ private struct SettingsView: View {
                     if filteredButtons.isEmpty {
                         VStack(spacing: 9) {
                             Image(systemName: "magnifyingglass").font(.system(size: 24)).foregroundColor(.secondary)
-                            Text("Nessun risultato").font(.system(size: 13, weight: .medium))
-                            Text("Prova un altro nome o cambia gruppo.").font(.system(size: 11)).foregroundColor(.secondary)
+                            Text("No results").font(.system(size: 13, weight: .medium))
+                            Text("Try another name or choose a different group.").font(.system(size: 11)).foregroundColor(.secondary)
                         }.frame(maxWidth: .infinity).padding(32)
                     }
-                    ForEach(["Simboli", "Dorsali", "Altri pulsanti"], id: \.self) { section in
+                    ForEach(["Symbols", "Shoulders", "Other buttons"], id: \.self) { section in
                         let rows = filteredButtons.filter { $0.group == section }
                         if !rows.isEmpty {
                             VStack(alignment: .leading, spacing: 8) {
@@ -313,17 +315,17 @@ private struct SettingsView: View {
             Divider()
             HStack(spacing: 8) {
                 Image(systemName: "info.circle").foregroundColor(.secondary)
-                Text("Frecce → Launcher · Options → attiva / sospendi · Salvataggio automatico")
+                Text("D-pad → Launcher · Options → enable / pause · Changes saved automatically")
                     .font(.system(size: 10)).foregroundColor(.secondary)
                 Spacer(minLength: 0)
                 Button { showHelp.toggle() } label: { Image(systemName: "questionmark.circle").foregroundColor(.secondary) }.buttonStyle(.plain)
-                    .help("Come funzionano tap e pressione lunga")
+                    .help("How taps and long presses work")
                     .popover(isPresented: $showHelp) {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Tap e pressione lunga").font(.system(size: 14, weight: .semibold))
-                            Text("Senza pressione lunga assegnata, la shortcut viene premuta subito e resta attiva fino al rilascio del pulsante.")
-                            Text("Con una pressione lunga assegnata, un tap esegue l’azione principale al rilascio. Superati 0,45 secondi si attiva solo la shortcut lunga, mantenuta fino al rilascio.")
-                            Text("Cambiare un’assegnazione sospende il controllo per sicurezza. Premi Attiva per riprendere.").foregroundColor(.secondary)
+                            Text("Taps and long presses").font(.system(size: 14, weight: .semibold))
+                            Text("Without a long-press assignment, the shortcut starts immediately and stays held until you release the button.")
+                            Text("With a long-press assignment, a quick tap runs the primary action on release. After 0.45 seconds, only the long-press shortcut is activated and held until release.")
+                            Text("Changing an assignment pauses input for safety. Click Enable to resume.").foregroundColor(.secondary)
                         }.font(.system(size: 12)).lineSpacing(3).padding(22).frame(width: 360)
                     }
             }.font(.system(size: 11)).padding(.horizontal, 24).padding(.vertical, 13)
@@ -331,7 +333,7 @@ private struct SettingsView: View {
     }
     private var filteredButtons: [ButtonSetting] {
         model.buttons.filter { setting in
-            setting.id < 15 && (group == "Tutti" || setting.group == group) &&
+            setting.id < 15 && (group == "All" || setting.group == group) &&
             (search.isEmpty || "\(setting.name) \(setting.primary) \(setting.hold ?? "")".localizedCaseInsensitiveContains(search))
         }
     }
@@ -343,8 +345,8 @@ private struct SettingsView: View {
                         .frame(width: 28, height: 28).background(Color.primary.opacity(0.035)).cornerRadius(6)
                     Text(setting.name).font(.system(size: 11, weight: .medium))
                 }.frame(width: 180, alignment: .leading)
-                Label("Joystick destro → scroll", systemImage: "arrow.up.arrow.down").font(.system(size: 11)).frame(maxWidth: .infinity, alignment: .leading)
-                Text("Mantieni premuto R1").font(.system(size: 11)).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .leading)
+                Label("Right stick → scroll", systemImage: "arrow.up.arrow.down").font(.system(size: 11)).frame(maxWidth: .infinity, alignment: .leading)
+                Text("Hold R1").font(.system(size: 11)).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .leading)
             }.padding(.horizontal, 14).padding(.vertical, 11)
         } else {
         HStack(spacing: 12) {
@@ -354,13 +356,13 @@ private struct SettingsView: View {
                 Text(setting.name).font(.system(size: 11, weight: .medium)).lineLimit(1)
             }.frame(width: 180, alignment: .leading)
             Menu {
-                Button("Registra shortcut…") { model.assign(12, to: setting.id) }
-                Button("Scegli applicazione…") { model.assign(11, to: setting.id) }
+                Button("Record shortcut…") { model.assign(12, to: setting.id) }
+                Button("Choose application…") { model.assign(11, to: setting.id) }
                 Divider()
                 if setting.id == 6 || setting.id == 7 {
-                    Button(setting.id == 7 ? "Click sinistro (predefinito)" : "Click destro (predefinito)") { model.assign(0, to: setting.id) }
+                    Button(setting.id == 7 ? "Left click (default)" : "Right click (default)") { model.assign(0, to: setting.id) }
                 }
-                Button("Nessuna azione") { model.assign(10, to: setting.id) }
+                Button("No action") { model.assign(10, to: setting.id) }
             } label: {
                 HStack(spacing: 7) {
                     if setting.action == 11, let path = setting.appPath {
@@ -374,49 +376,49 @@ private struct SettingsView: View {
                 }.frame(height: 20).padding(.horizontal, 8).padding(.vertical, 4)
             }.menuStyle(.borderlessButton).tint(setting.action == 10 || setting.action == 0 && setting.id != 6 && setting.id != 7 ? .secondary : .primary)
                 .frame(height: 30).background(Color.primary.opacity(0.035)).cornerRadius(5)
-                .frame(maxWidth: .infinity).help("Configura l’azione principale di \(setting.name)")
+                .frame(maxWidth: .infinity).help("Configure the primary action for \(setting.name)")
             Menu {
-                Button(setting.hold == nil ? "Registra shortcut lunga…" : "Registra nuova shortcut…") { model.recordHold(setting.id) }
-                if setting.hold != nil { Divider(); Button("Rimuovi shortcut lunga") { model.removeHold(setting.id) } }
+                Button(setting.hold == nil ? "Record long-press shortcut…" : "Record a new shortcut…") { model.recordHold(setting.id) }
+                if setting.hold != nil { Divider(); Button("Remove long-press shortcut") { model.removeHold(setting.id) } }
             } label: {
                 HStack(spacing: 7) {
                     Image(systemName: setting.hold == nil ? "plus" : "hand.tap").font(.system(size: 11)).foregroundColor(.secondary)
-                    Text(setting.hold ?? "Non assegnata").font(.system(size: 11, weight: setting.hold == nil ? .regular : .medium)).lineLimit(1).foregroundColor(setting.hold == nil ? .secondary : .primary)
+                    Text(setting.hold ?? "Not assigned").font(.system(size: 11, weight: setting.hold == nil ? .regular : .medium)).lineLimit(1).foregroundColor(setting.hold == nil ? .secondary : .primary)
                     Spacer(minLength: 0)
                 }.frame(height: 20).padding(.horizontal, 8).padding(.vertical, 4)
             }.menuStyle(.borderlessButton).tint(setting.hold == nil ? .secondary : .primary)
                 .frame(height: 30).background(Color.primary.opacity(0.035)).cornerRadius(5)
-                .frame(maxWidth: .infinity).help("Registra o rimuovi la shortcut per la pressione lunga")
+                .frame(maxWidth: .infinity).help("Record or remove the long-press shortcut")
         }.padding(.horizontal, 14).padding(.vertical, 10)
-            .help(setting.id == 12 || setting.id == 14 ? "La disponibilità di questo pulsante dipende da macOS e dal firmware." : setting.name)
+            .help(setting.id == 12 || setting.id == 14 ? "This button’s availability depends on macOS and controller firmware." : setting.name)
         }
     }
     private var launcherSettings: some View {
         VStack(alignment: .leading, spacing: 20) {
-            heading("Navigazione direzionale", detail: "Una freccia apre subito l’app. Ripremila mentre l’overlay è visibile per aprire la seconda.")
+            heading("Directional navigation", detail: "Press a direction to open an app. Press it again while the overlay is visible to open the second.")
             HStack(spacing: 18) {
-                Label("Apertura automatica · nessuna conferma", systemImage: "bolt.fill")
-                Label("○ chiude l’overlay", systemImage: "xmark.circle")
+                Label("Instant launch · no confirmation", systemImage: "bolt.fill")
+                Label("○ dismisses the overlay", systemImage: "xmark.circle")
             }.font(.system(size: 11)).foregroundColor(.secondary)
             ForEach(0..<4, id: \.self) { direction in
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(spacing: 9) {
                         Text(["↑", "→", "↓", "←"][direction]).font(.system(size: 21, weight: .medium)).foregroundColor(accent)
-                        Text(["Su", "Destra", "Giù", "Sinistra"][direction]).font(.system(size: 13, weight: .medium))
+                        Text(["Up", "Right", "Down", "Left"][direction]).font(.system(size: 13, weight: .medium))
                         Spacer()
-                        Text("MAX 2 APP").font(.system(size: 9, weight: .medium)).foregroundColor(.secondary)
+                        Text("UP TO 2 APPS").font(.system(size: 9, weight: .medium)).foregroundColor(.secondary)
                     }
                     HStack(spacing: 12) {
                         ForEach(0..<2, id: \.self) { slot in
                             let path = model.launcherApps[direction][slot]
                             Menu {
-                                Button(path.isEmpty ? "Scegli applicazione…" : "Cambia applicazione…") { model.configureLauncher(direction, slot: slot) }
-                                if !path.isEmpty { Divider(); Button("Rimuovi applicazione") { model.clearLauncher(direction, slot: slot) } }
+                                Button(path.isEmpty ? "Choose application…" : "Change application…") { model.configureLauncher(direction, slot: slot) }
+                                if !path.isEmpty { Divider(); Button("Remove application") { model.clearLauncher(direction, slot: slot) } }
                             } label: {
                                 HStack(spacing: 9) {
                                     if !path.isEmpty { Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().frame(width: 20, height: 20) }
                                     else { Image(systemName: "plus.app").font(.system(size: 17)).foregroundColor(.secondary) }
-                                    Text(path.isEmpty ? "App \(slot + 1) · Scegli applicazione…" : "\(slot + 1) · \(FileManager.default.displayName(atPath: path))")
+                                    Text(path.isEmpty ? "App \(slot + 1) · Choose application…" : "\(slot + 1) · \(FileManager.default.displayName(atPath: path))")
                                         .font(.system(size: 11)).lineLimit(1)
                                     Spacer(minLength: 0)
                                 }.padding(11)
@@ -426,42 +428,42 @@ private struct SettingsView: View {
                     }
                 }.padding(18).card(radius: 8)
             }
-            Text("Il controllo deve essere attivo. L’overlay scompare dopo 1,2 s. Le frecce aprono le app; ✕ e ○ non eseguono le shortcut mentre è visibile. Le precedenti assegnazioni delle frecce sono conservate ma non vengono eseguite; eventuali app già assegnate sono migrate nello slot 1.")
+            Text("Controller input must be enabled. The overlay disappears after 1.2 seconds. Directions open apps; ✕ and ○ do not run their normal shortcuts while it is visible. Previous D-pad assignments remain stored; previously assigned apps are migrated to slot 1.")
                 .font(.system(size: 10)).foregroundColor(.secondary).lineSpacing(3)
         }
     }
     private var mouseSettings: some View {
         VStack(alignment: .leading, spacing: 22) {
-            heading("Joystick destro", detail: "Il movimento usa accelerazione progressiva per migliorare la precisione.")
+            heading("Right stick", detail: "Progressive acceleration helps keep cursor movement precise.")
             VStack(alignment: .leading, spacing: 22) {
-                sliderSetting("Velocità", description: "Velocità massima del cursore", value: String(format: "%.0f pt/s", model.speed)) {
+                sliderSetting("Cursor speed", description: "Maximum cursor movement speed", value: String(format: "%.0f pt/s", model.speed)) {
                     Slider(value: Binding(get: { model.speed }, set: model.setSpeed), in: 200...2600)
                 }
                 Divider()
-                sliderSetting("Zona morta", description: "Ignora i piccoli movimenti a riposo", value: String(format: "%.0f %%", model.deadzone * 100)) {
+                sliderSetting("Deadzone", description: "Ignore small movements when the stick is at rest", value: String(format: "%.0f %%", model.deadzone * 100)) {
                     Slider(value: Binding(get: { model.deadzone }, set: model.setDeadzone), in: 0.03...0.4)
                 }
             }.padding(20).card(radius: 8)
-            heading("Scroll con R1", detail: "Mantieni premuto R1: il joystick destro scorre in verticale e orizzontale senza muovere il cursore.")
+            heading("Scroll with R1", detail: "Hold R1 to scroll vertically and horizontally with the right stick, without moving the cursor.")
             VStack(alignment: .leading, spacing: 17) {
-                sliderSetting("Sensibilità scroll", description: "Velocità massima, indipendente da quella del cursore", value: String(format: "%.0f px/s", model.scrollSpeed)) {
+                sliderSetting("Scroll sensitivity", description: "Maximum scroll speed, independent of cursor speed", value: String(format: "%.0f px/s", model.scrollSpeed)) {
                     Slider(value: Binding(get: { model.scrollSpeed }, set: model.setScrollSpeed), in: 100...3000)
                 }
                 Divider()
-                Text("Rilascia R1 per tornare al mouse. La zona morta si applica anche allo scroll.")
+                Text("Release R1 to return to cursor control. The stick deadzone also applies to scrolling.")
                     .font(.system(size: 11)).foregroundColor(.secondary)
             }.padding(20).card(radius: 8)
-            heading("Touchpad", detail: "Scorri un dito per muovere il mouse. Sollevalo per riposizionarlo.")
+            heading("Touchpad", detail: "Slide one finger to move the cursor. Lift it to reposition without moving the mouse.")
             HStack {
-                Text("Sensibilità").font(.system(size: 12))
+                Text("Sensitivity").font(.system(size: 12))
                 Spacer()
-                Text("0,8 pt / unità").font(.system(size: 11, design: .monospaced)).foregroundColor(.secondary)
+                Text("0.8 pt / unit").font(.system(size: 11, design: .monospaced)).foregroundColor(.secondary)
             }.padding(18).card(radius: 8)
-            heading("Click e trascinamento", detail: "R2 è il click sinistro, L2 il destro. Mantieni premuto per trascinare.")
+            heading("Clicks and dragging", detail: "R2 is left click; L2 is right click. Hold either trigger to drag.")
             HStack {
-                Label("Le assegnazioni sono modificabili nella sezione Pulsanti.", systemImage: "computermouse").font(.system(size: 11)).foregroundColor(.secondary)
+                Label("You can change these assignments in Buttons.", systemImage: "computermouse").font(.system(size: 11)).foregroundColor(.secondary)
                 Spacer()
-                Button("Pulsanti") { page = .buttons }.buttonStyle(.bordered).controlSize(.small)
+                Button("Buttons") { page = .buttons }.buttonStyle(.bordered).controlSize(.small)
             }.padding(18).card(radius: 8)
         }
     }
@@ -480,23 +482,23 @@ private struct SettingsView: View {
     }
     private var permissions: some View {
         VStack(alignment: .leading, spacing: 22) {
-            heading("Accessibilità", detail: "Necessaria per controllare mouse e tastiera tramite il controller.")
+            heading("Accessibility", detail: "Required to control the mouse and keyboard with your controller.")
             HStack(alignment: .top, spacing: 15) {
                 Image(systemName: model.trusted ? "checkmark.shield" : "lock.shield").font(.system(size: 27)).foregroundColor(model.trusted ? .green : accent)
                 VStack(alignment: .leading, spacing: 9) {
-                    Text(model.trusted ? "Punto è autorizzato" : "Autorizzazione necessaria").font(.system(size: 13, weight: .medium))
-                    Text("Privacy e sicurezza → Accessibilità → Punto").font(.system(size: 11)).foregroundColor(.secondary)
-                    Button("Apri impostazioni Accessibilità") { model.controller.openAccessibility(); model.refresh() }.buttonStyle(.bordered).controlSize(.small)
+                    Text(model.trusted ? "Punto is authorized" : "Permission required").font(.system(size: 13, weight: .medium))
+                    Text("Privacy & Security → Accessibility → Punto").font(.system(size: 11)).foregroundColor(.secondary)
+                    Button("Open Accessibility settings") { model.controller.openAccessibility(); model.refresh() }.buttonStyle(.bordered).controlSize(.small)
                 }
                 Spacer()
             }.padding(20).card(radius: 8)
-            heading("Connessione e sicurezza", detail: "Punto elabora gli input localmente e parte sempre sospeso.")
+            heading("Connection and safety", detail: "Punto processes input locally and always starts paused.")
             VStack(alignment: .leading, spacing: 17) {
-                instruction("cable.connector", title: "USB o Bluetooth", detail: "Usa un cavo USB dati. Per l’abbinamento Bluetooth, tieni premuti PS + Create fino al lampeggio.")
+                instruction("cable.connector", title: "USB or Bluetooth", detail: "Use a USB data cable. To pair over Bluetooth, hold PS + Create until the light flashes.")
                 Divider()
-                instruction("keyboard", title: "Monitoraggio input", detail: "Autorizzalo nelle impostazioni di Privacy e sicurezza se macOS lo richiede.")
+                instruction("keyboard", title: "Input Monitoring", detail: "Grant permission in Privacy & Security settings if macOS requests it.")
                 Divider()
-                instruction("pause.circle", title: "Options sospende il controllo", detail: "Sospensione, disconnessione e uscita normale rilasciano tutte le shortcut mantenute.")
+                instruction("pause.circle", title: "Options pauses input", detail: "Pausing, disconnecting, and quitting normally release all held shortcuts.")
             }.padding(20).card(radius: 8)
         }
     }

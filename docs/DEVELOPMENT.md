@@ -56,6 +56,8 @@ Local signing does not replace Developer ID signing and notarization for distrib
 | Executable | `Punto` |
 | Bundle ID | `local.padmac.controller` |
 
+The interface, dialogs, and menu-bar commands use English. Legacy shortcut display labels and theme names are translated without changing saved keycodes, modifiers, or the selected theme.
+
 The original bundle ID preserves the preferences domain. Its internal name and the certificate name are retained for compatibility; the application itself is named Punto.
 
 When upgrading from the old bundle, replace the old Dock shortcut with `Punto.app`. If Accessibility authorization stops working, remove the old entry and add the new bundle.
@@ -153,7 +155,7 @@ open build/Punto.app --args \
   --ui-preview "$PWD/build/ui-mouse.png"
 ```
 
-Available pages: `buttons`, `launcher`, `mouse`, `permissions`. `--ui-group Dorsali` filters the current Italian-language button group. Omit `--ui-dark` for a light preview. These options do not change assignments.
+Available pages: `buttons`, `launcher`, `mouse`, `permissions`. `--ui-group Shoulders` filters the shoulder buttons. Omit `--ui-dark` for a light preview. These options do not change assignments.
 
 `make test-launcher-ui` creates `build/ui-launcher.png` with demo applications. README screenshots live in `docs/screenshots/`.
 
