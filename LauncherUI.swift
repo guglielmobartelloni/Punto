@@ -24,9 +24,7 @@ struct PuntoLauncherView: View {
                     }
                     Spacer()
                     HStack(spacing: 24) {
-                        Button { model.controller.confirmLauncher() } label: {
-                            HStack(spacing: 7) { Text("✕").foregroundColor(coral); Text("Apri") }
-                        }.disabled(selectedPath.isEmpty)
+                        Label("Apertura automatica", systemImage: "bolt.fill").foregroundColor(.white.opacity(0.55))
                         Button { model.controller.hideLauncher() } label: {
                             HStack(spacing: 7) { Text("○"); Text("Chiudi") }
                         }
@@ -47,7 +45,7 @@ struct PuntoLauncherView: View {
                             .font(.system(size: 10)).foregroundColor(.white.opacity(0.45)).multilineTextAlignment(.center).lineSpacing(3)
                     } else {
                         Text(FileManager.default.displayName(atPath: selectedPath)).font(.system(size: 14, weight: .medium)).lineLimit(2).multilineTextAlignment(.center)
-                        Text("✕  PER APRIRE").font(.system(size: 8, weight: .semibold)).tracking(1.3).foregroundColor(.white.opacity(0.45))
+                        Text("APERTURA AUTOMATICA").font(.system(size: 8, weight: .semibold)).tracking(1.3).foregroundColor(.white.opacity(0.45))
                     }
                 }.frame(width: 160).position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             }

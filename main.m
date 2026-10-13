@@ -13,6 +13,7 @@
     LauncherState _launcher;
 }
 @property NSPanel *launcherPanel;
+@property double launcherHideTime;
 @property NSStatusItem *item;
 @property NSWindow *window;
 @property NSTimer *timer;
@@ -120,8 +121,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     if(index<0){longpress_cancel(hold_event);[self hideLauncher];return YES;}
     if(index>=15&&index<=18){if(pressed)[self selectLauncherDirection:index-15];return YES;}
     if(_launcher.visible){
-        if(pressed&&index==1)[self confirmLauncher];
-        else if(pressed&&index==2)[self hideLauncher];
+        if(pressed&&index==2)[self hideLauncher];
         return YES;
     }
     if([NSUserDefaults.standardUserDefaults dictionaryForKey:[self holdKey:index]]){
@@ -185,15 +185,12 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     input_suppress_pointer(true);
     if(!self.launcherPanel)self.launcherPanel=[PadMacUI makeLauncherWithController:self];
     [self.launcherPanel center];[self.launcherPanel orderFrontRegardless];
-}
-- (void)confirmLauncher {
-    if(!_launcher.visible||_launcher.direction<0||_launcher.slot<0)return;
+    self.launcherHideTime=NSProcessInfo.processInfo.systemUptime+1.2;
     NSString *path=[self launcherApps:_launcher.direction][_launcher.slot];
-    if(!path.length){NSBeep();return;}
-    [self hideLauncher];[self launchApplication:path];
+    if(path.length)[self launchApplication:path];
 }
 - (void)hideLauncher {
-    launcher_reset(&_launcher);[self.launcherPanel orderOut:nil];
+    self.launcherHideTime=0;launcher_reset(&_launcher);[self.launcherPanel orderOut:nil];
     self.launcherPanel.contentView=nil;self.launcherPanel=nil;input_suppress_pointer(false);
 }
 - (void)launchApplication:(NSString *)path {
@@ -208,6 +205,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 }
 - (void)tick:(NSTimer *)timer {
     (void)timer;double now=NSProcessInfo.processInfo.systemUptime,dt=MIN(0.04,now-self.lastTime);self.lastTime=now;
+    if(_launcher.visible&&self.launcherHideTime>0&&now>=self.launcherHideTime)[self hideLauncher];
     if(input_enabled()&&!AXIsProcessTrusted())input_enable(false);
     if(input_enabled()&&!_launcher.visible)longpress_tick(now,hold_event);
     input_tick(dt,self.speed,self.deadzone);

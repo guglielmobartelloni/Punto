@@ -38,12 +38,12 @@ Configura le app nella sezione «Launcher»: due slot per ciascuna direzione (su
 
 Con il controllo attivo:
 
-1. Premi una freccia: si apre l’overlay scuro e si seleziona la prima app disponibile in quella direzione.
-2. Ripremi la stessa freccia per alternare tra le due app, saltando gli slot vuoti. Cambiando direzione, selezioni la prima app disponibile della nuova direzione.
-3. Premi ✕ per aprire/richiamare l’app e chiudere l’overlay. Uno slot vuoto non apre nulla.
-4. Premi ○ per annullare. Options sospende il controllo e chiude l’overlay.
+1. Premi una freccia: si apre/richiama subito la prima app disponibile in quella direzione. L’overlay mostra quale app è stata selezionata.
+2. Ripremi la stessa freccia mentre l’overlay è visibile per passare alla seconda app e aprirla automaticamente. Gli slot vuoti vengono saltati; una nuova direzione seleziona e apre la prima app disponibile.
+3. Non serve ✕. L’overlay scompare 1,2 secondi dopo l’ultima freccia; dopo la chiusura una nuova pressione riparte dalla prima app. Uno slot vuoto non apre nulla.
+4. ○ chiude anticipatamente il feedback visivo (non annulla un’apertura già avvenuta). Options sospende il controllo e chiude l’overlay.
 
-Non viene avviata nessuna app alla sola pressione della freccia. Mantenere premuta una freccia non ripete la navigazione: occorre rilasciarla e ripremerla. Mentre l’overlay è aperto, gli altri pulsanti vengono consumati e joystick/touchpad non muovono il mouse. All’apertura vengono rilasciate eventuali shortcut/click mantenuti e cancellate le pressioni lunghe in attesa. Alla chiusura si ripristina il controllo normale.
+L’apertura avviene direttamente alla pressione della freccia, non al rilascio e non dopo una conferma. Mantenere premuta una freccia non ripete la navigazione: occorre rilasciarla e ripremerla. Mentre l’overlay è aperto, gli altri pulsanti vengono consumati e joystick/touchpad non muovono il mouse. All’apertura vengono rilasciate eventuali shortcut/click mantenuti e cancellate le pressioni lunghe in attesa. Alla chiusura si ripristina il controllo normale.
 
 L’overlay è un pannello non attivante: non ruba il focus alla finestra in uso, non porta la configurazione in primo piano e da solo non aggiunge l’app al Dock. Non usa asset di videogiochi. `LauncherUI.swift` contiene la vista e `launcher.c` la macchina a stati di selezione.
 
@@ -61,7 +61,7 @@ La lettura controller usa IOKit/HID non esclusivo. Se si avvia un gioco, sospend
 4. Provare click sinistro con R2, destro con L2 e trascinamento con ciascun grilletto; verificare il rilascio anche premendoli entrambi.
 5. Provare shortcut in un documento non importante.
 6. Verificare sospensione tramite Options, disconnessione durante un trascinamento e persistenza delle preferenze.
-7. Assegnare un’app innocua a un pulsante e due app per direzione nel Launcher. Riattivare il controllo: verificare apertura alla prima freccia, cambio slot alla seconda, cambio direzione, ✕ per confermare e ○ per annullare. Verificare che le shortcut normali di ✕/○ non vengano eseguite nell’overlay.
+7. Assegnare un’app innocua a un pulsante e due app per direzione nel Launcher. Riattivare il controllo: verificare apertura alla prima freccia, cambio slot alla seconda, apertura immediata al cambio direzione e chiusura automatica dopo 1,2 s. ○ chiude il feedback; ✕ non conferma né riapre l’app. Verificare che le shortcut normali di ✕/○ non vengano eseguite nell’overlay.
 8. Chiudere e riaprire Punto: verificare che le assegnazioni siano conservate. Provare annullamento del selettore app e ritorno al click predefinito su R2/L2.
 9. Registrare una combinazione personalizzata (es. ⇧⌘S), un tasto singolo, Escape e una freccia; salvare e verificare l’esecuzione con il controller in un documento non importante. Verificare annullamento, nuova registrazione sulla stessa assegnazione e persistenza al riavvio.
 10. Assegnare una shortcut Hold diversa dalla principale: verificare tap rapido (solo principale) e pressione oltre 0,45 s (solo Hold, mantenuta fino al rilascio). Provare Options e disconnessione sia prima sia dopo la soglia. Rimuovere Hold e verificare il ritorno al push-to-talk immediato.
@@ -70,7 +70,7 @@ La lettura controller usa IOKit/HID non esclusivo. Se si avvia un gioco, sospend
 
 `make test` verifica il dispatch dei 19 slot, l’assenza di ripetizioni su pressione mantenuta, la sospensione e la riserva di Options. Verifica inoltre acquisizione di combinazioni arbitrarie, tasti speciali, filtri sui modificatori e migrazione delle preferenze, nonché mantenimento e rilascio delle shortcut, combinazioni condivise e rilascio di sicurezza alla sospensione/disconnessione/uscita. Verifica anche distinzione tra tap e pressione lunga, soglia, pressioni simultanee e cancellazione delle azioni in attesa. Non sostituisce il test fisico del mapping HID, della finestra di registrazione, della riproduzione delle shortcut o dell’apertura delle app.
 
-`make test` include anche la selezione direzionale, il ciclo tra due app, gli slot vuoti e il reset del Launcher. `make test-launcher-ui` verifica il routing dei pulsanti, conferma/annullamento, pulizia alla sospensione e assenza di attivazione del Dock. Usa preferenze volatili isolate e intercetta l’apertura delle app: non modifica le assegnazioni e non avvia app reali. Salva una preview dell’overlay in `build/ui-launcher.png`.
+`make test` include anche la selezione direzionale, il ciclo tra due app, gli slot vuoti e il reset del Launcher. `make test-launcher-ui` verifica apertura automatica alla selezione, routing dei pulsanti, chiusura manuale, pulizia alla sospensione e assenza di attivazione del Dock. Usa preferenze volatili isolate e intercetta l’apertura delle app: non modifica le assegnazioni e non avvia app reali. Salva una preview dell’overlay in `build/ui-launcher.png`.
 
 `make test-dock` è un test nativo opzionale che apre e chiude una finestra di prova: verifica il cambio della activation policy, la riapertura e che chiudere le impostazioni non sospenda il controllo. Richiede una sessione grafica macOS.
 

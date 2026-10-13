@@ -29,23 +29,27 @@ int main(void){@autoreleasepool{
     assert([delegate handleButton:15 pressed:YES]);
     assert([[delegate settingsSnapshot][@"launcherVisible"] boolValue]);
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
+    assert([delegate.launchedPath isEqualToString:up[0]]); // Immediate automatic launch.
     assert(application.activationPolicy==NSApplicationActivationPolicyAccessory);
     assert(delegate.launcherPanel.isVisible); // Overlay alone must not add a Dock icon.
     assert([delegate handleButton:15 pressed:NO]);
     [delegate handleButton:15 pressed:YES];
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==1);
+    assert([delegate.launchedPath isEqualToString:up[1]]);
     [delegate handleButton:18 pressed:YES];
     assert([[delegate settingsSnapshot][@"launcherDirection"] intValue]==3);
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
     assert([delegate handleButton:7 pressed:YES]); // R2 is consumed while navigating.
+    NSString *beforeCancel=delegate.launchedPath;
     [delegate handleButton:2 pressed:YES];
     assert(![[delegate settingsSnapshot][@"launcherVisible"] boolValue]);
     assert(!delegate.launcherPanel.isVisible&&input_enabled());
-    assert(delegate.launchedPath==nil); // Circle did not invoke its configured normal action.
+    assert([delegate.launchedPath isEqualToString:beforeCancel]); // Circle does not launch anything.
     [delegate handleButton:15 pressed:YES];[delegate handleButton:15 pressed:YES];
     [delegate handleButton:1 pressed:YES];
     assert([delegate.launchedPath isEqualToString:up[1]]);
-    assert(![[delegate settingsSnapshot][@"launcherVisible"] boolValue]);
+    assert([[delegate settingsSnapshot][@"launcherVisible"] boolValue]); // X is not a confirmation.
+    assert(delegate.launcherHideTime>NSProcessInfo.processInfo.systemUptime);
     [delegate handleButton:15 pressed:YES];input_enable(false);
     assert(!delegate.launcherPanel.isVisible);
     input_enable(true);[delegate handleButton:15 pressed:YES];
@@ -57,5 +61,5 @@ int main(void){@autoreleasepool{
     assert([png writeToFile:@"build/ui-launcher.png" atomically:YES]);
     [delegate hideLauncher];input_stop();input_button_handler(NULL);currentApp=nil;
     [defaults setVolatileDomain:original?:@{} forName:NSArgumentDomain];
-    puts("PASS: overlay routing, two-slot cycle, confirm/cancel, suspend cleanup, no Dock activation");
+    puts("PASS: automatic directional launch, two-slot cycle, cancel, suspend cleanup, no Dock activation");
 }return 0;}

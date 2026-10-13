@@ -378,9 +378,9 @@ private struct SettingsView: View {
     }
     private var launcherSettings: some View {
         VStack(alignment: .leading, spacing: 20) {
-            heading("Navigazione direzionale", detail: "Una freccia apre l’overlay e seleziona la prima app. Ripremila per passare alla seconda.")
+            heading("Navigazione direzionale", detail: "Una freccia apre subito l’app. Ripremila mentre l’overlay è visibile per aprire la seconda.")
             HStack(spacing: 18) {
-                Label("✕ apre l’app selezionata", systemImage: "play.circle")
+                Label("Apertura automatica · nessuna conferma", systemImage: "bolt.fill")
                 Label("○ chiude l’overlay", systemImage: "xmark.circle")
             }.font(.system(size: 11)).foregroundColor(.secondary)
             ForEach(0..<4, id: \.self) { direction in
@@ -411,7 +411,7 @@ private struct SettingsView: View {
                     }
                 }.padding(18).card(radius: 8)
             }
-            Text("Il controllo deve essere attivo. Nel Launcher, le frecce, ✕ e ○ navigano senza eseguire le shortcut. Le precedenti assegnazioni delle frecce sono conservate ma non vengono eseguite; eventuali app già assegnate sono migrate nello slot 1.")
+            Text("Il controllo deve essere attivo. L’overlay scompare dopo 1,2 s. Le frecce aprono le app; ✕ e ○ non eseguono le shortcut mentre è visibile. Le precedenti assegnazioni delle frecce sono conservate ma non vengono eseguite; eventuali app già assegnate sono migrate nello slot 1.")
                 .font(.system(size: 10)).foregroundColor(.secondary).lineSpacing(3)
         }
     }
