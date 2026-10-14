@@ -6,9 +6,11 @@
 #include <assert.h>
 @interface LauncherTestApp : App
 @property NSString *launchedPath;
+@property NSInteger launchCount;
 @end
 @implementation LauncherTestApp
-- (void)launchApplication:(NSString *)path {self.launchedPath=path;}
+- (void)launchApplication:(NSString *)path {self.launchedPath=path;self.launchCount++;}
+- (void)saveNavigationMode {}
 @end
 static NSString *appPath(NSString *identifier){
     return [NSWorkspace.sharedWorkspace URLForApplicationWithBundleIdentifier:identifier].path?:@"";
@@ -30,7 +32,9 @@ int main(void){@autoreleasepool{
     assert([delegate handleButton:15 pressed:YES]);assert(!input_scroll_active());
     assert([[delegate settingsSnapshot][@"launcherVisible"] boolValue]);
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
-    assert([delegate.launchedPath isEqualToString:up[0]]); // Immediate automatic launch.
+    assert(!delegate.launchedPath&&[delegate.pendingLauncherPath isEqual:up[0]]);
+    double firstDeadline=delegate.launcherLaunchTime;
+    [delegate updateLauncherAtTime:firstDeadline-0.01 trusted:YES];assert(delegate.launchCount==0);
     assert(application.activationPolicy==NSApplicationActivationPolicyAccessory);
     assert(!delegate.launcherPanel.isKeyWindow);
     assert(delegate.launcherPanel.isVisible); // Overlay alone must not add a Dock icon.
@@ -39,7 +43,12 @@ int main(void){@autoreleasepool{
     assert([delegate handleButton:15 pressed:NO]);
     [delegate handleButton:15 pressed:YES];
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==1);
-    assert([delegate.launchedPath isEqualToString:up[1]]);
+    assert(!delegate.launchedPath&&[delegate.pendingLauncherPath isEqual:up[1]]);
+    assert(delegate.launcherLaunchTime>firstDeadline);
+    [delegate updateLauncherAtTime:firstDeadline trusted:YES];assert(delegate.launchCount==0);
+    [delegate updateLauncherAtTime:delegate.launcherLaunchTime trusted:YES];
+    assert([delegate.launchedPath isEqual:up[1]]&&delegate.launchCount==1);
+    [delegate updateLauncherAtTime:firstDeadline+1 trusted:YES];assert(delegate.launchCount==1);
     [delegate handleButton:18 pressed:YES];
     assert([[delegate settingsSnapshot][@"launcherDirection"] intValue]==3);
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
@@ -48,15 +57,24 @@ int main(void){@autoreleasepool{
     [delegate handleButton:2 pressed:YES];
     assert(![[delegate settingsSnapshot][@"launcherVisible"] boolValue]);
     assert(!delegate.launcherPanel.isVisible&&input_enabled());
-    assert([delegate.launchedPath isEqualToString:beforeCancel]); // Circle does not launch anything.
+    [delegate updateLauncherAtTime:firstDeadline+5 trusted:YES];
+    assert([delegate.launchedPath isEqualToString:beforeCancel]&&delegate.launchCount==1); // Circle cancels the pending app.
     [delegate handleButton:15 pressed:YES];[delegate handleButton:15 pressed:YES];
     [delegate handleButton:1 pressed:YES];
-    assert([delegate.launchedPath isEqualToString:up[1]]);
+    assert(delegate.launchCount==1); // X does not bypass the delay.
+    [delegate updateLauncherAtTime:delegate.launcherLaunchTime trusted:YES];
+    assert([delegate.launchedPath isEqualToString:up[1]]&&delegate.launchCount==2);
     assert([[delegate settingsSnapshot][@"launcherVisible"] boolValue]); // X is not a confirmation.
     assert(delegate.launcherHideTime>NSProcessInfo.processInfo.systemUptime);
     [delegate handleButton:15 pressed:YES];input_enable(false);
     assert(!delegate.launcherPanel.isVisible);
+    [delegate updateLauncherAtTime:firstDeadline+5 trusted:YES];assert(delegate.launchCount==2);
     input_enable(true);[delegate handleButton:15 pressed:YES];
+    [delegate updateLauncherAtTime:delegate.launcherLaunchTime trusted:NO];
+    [delegate updateLauncherAtTime:firstDeadline+5 trusted:YES];assert(delegate.launchCount==2);
+    [delegate handleButton:15 pressed:YES];[delegate setUINavigationEnabled:YES];
+    [delegate updateLauncherAtTime:firstDeadline+5 trusted:YES];assert(delegate.launchCount==2);
+    [delegate setUINavigationEnabled:NO];[delegate handleButton:15 pressed:YES];
     [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.3]];
     NSView *view=delegate.launcherPanel.contentView;[view layoutSubtreeIfNeeded];
     NSBitmapImageRep *bitmap=[view bitmapImageRepForCachingDisplayInRect:view.bounds];
@@ -67,5 +85,5 @@ int main(void){@autoreleasepool{
     assert([png writeToFile:@"build/ui-launcher.png" atomically:YES]);
     [delegate hideLauncher];input_stop();input_button_handler(NULL);currentApp=nil;
     [defaults setVolatileDomain:original?:@{} forName:NSArgumentDomain];
-    puts("PASS: automatic directional launch, two-slot cycle, cancel, suspend cleanup, compact tiles-only layout, no focus or Dock activation");
+    puts("PASS: delayed latest-selection launch, deadline reset, one-shot, cancel/pause/permission/mode-change safety, compact tiles-only layout, no focus or Dock activation");
 }return 0;}

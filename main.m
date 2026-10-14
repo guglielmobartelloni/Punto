@@ -20,6 +20,8 @@
 @property BOOL navigationMode;
 @property NSPanel *launcherPanel;
 @property double launcherHideTime;
+@property double launcherLaunchTime;
+@property NSString *pendingLauncherPath;
 @property NSStatusItem *item;
 @property NSWindow *window;
 @property NSTimer *timer;
@@ -234,13 +236,21 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     input_suppress_pointer(true);
     if(!self.launcherPanel)self.launcherPanel=[PadMacUI makeLauncherWithController:self];
     [self.launcherPanel center];[self.launcherPanel orderFrontRegardless];
-    self.launcherHideTime=NSProcessInfo.processInfo.systemUptime+1.2;
-    NSString *path=[self launcherApps:_launcher.direction][_launcher.slot];
-    if(path.length)[self launchApplication:path];
+    double now=NSProcessInfo.processInfo.systemUptime;
+    self.launcherHideTime=now+1.2;
+    self.pendingLauncherPath=[self launcherApps:_launcher.direction][_launcher.slot];
+    self.launcherLaunchTime=self.pendingLauncherPath.length?now+0.5:0;
 }
 - (void)hideLauncher {
-    self.launcherHideTime=0;launcher_reset(&_launcher);[self.launcherPanel orderOut:nil];
+    self.launcherHideTime=0;self.launcherLaunchTime=0;self.pendingLauncherPath=nil;launcher_reset(&_launcher);[self.launcherPanel orderOut:nil];
     self.launcherPanel.contentView=nil;self.launcherPanel=nil;input_suppress_pointer(false);
+}
+- (void)updateLauncherAtTime:(double)now trusted:(BOOL)trusted {
+    if(!trusted||!input_enabled()||self.navigationMode){self.launcherLaunchTime=0;self.pendingLauncherPath=nil;return;}
+    if(!_launcher.visible||self.launcherLaunchTime<=0||now<self.launcherLaunchTime)return;
+    NSString *path=self.pendingLauncherPath;
+    self.launcherLaunchTime=0;self.pendingLauncherPath=nil;
+    if(path.length)[self launchApplication:path];
 }
 - (void)launchApplication:(NSString *)path {
     if(!path.length)return;
@@ -268,6 +278,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
         if(previous>=0&&_leftStick.direction<0)[self.uiNavigation stopStickNavigation];
         if(direction>=0)[self navigateStickDirection:direction];
     }else stick_navigation_reset(&_leftStick);
+    [self updateLauncherAtTime:now trusted:trusted];
 }
 - (void)toggleControl {
     if(input_enabled()){input_enable(false);return;}

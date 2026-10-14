@@ -40,7 +40,8 @@ int main(void){@autoreleasepool{
     [app handleButton:8 pressed:YES];assert(!app.navigationMode&&!input_scroll_active());
     [app handleButton:8 pressed:NO];assert(!app.navigationMode);
     [app handleButton:1 pressed:YES];assert([app.launchedPath isEqual:@"cross-app"]);
-    [app navigateStickDirection:0];assert(app.launcherPanel.isVisible&&[app.launchedPath isEqual:@"demo-app"]);
+    [app navigateStickDirection:0];assert(app.launcherPanel.isVisible&&[app.launchedPath isEqual:@"cross-app"]);
+    [app updateLauncherAtTime:app.launcherLaunchTime trusted:YES];assert([app.launchedPath isEqual:@"demo-app"]);
     [app handleButton:8 pressed:YES];assert(app.navigationMode&&!app.launcherPanel.isVisible);
     assert([defaults integerForKey:@"action8"]==11&&[[defaults stringForKey:@"app8"] isEqual:@"old-select-app"]);
     assert(![app validButton:8]&&[app validButton:13]);

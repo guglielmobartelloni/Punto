@@ -94,11 +94,11 @@ When upgrading from the old bundle, replace the old Dock shortcut with `Punto.ap
 ### Launcher
 
 - Two slots per direction, saved as application paths.
-- A D-pad direction selects and **immediately opens** the first available app.
+- A D-pad direction or left-stick tilt selects the first available app. It opens **500 ms after the last selection**, without confirmation.
 - Pressing the same direction again while the overlay is visible cycles between occupied slots.
 - A different direction selects its first available app.
 - The overlay closes **1.2 seconds** after the last direction press. A later press starts from the first slot again.
-- ○ only dismisses visual feedback; it does not close an app already opened.
+- Changing selection restarts the 500 ms deadline and replaces the pending app. ○ cancels pending launch and dismisses feedback; it does not close an app already opened. Pause, disconnect, permission loss, mode changes, and overlay closure also cancel pending launch. The deadline is checked after stick navigation in the main tick, so a new selection takes precedence over an expiring launch.
 - The non-activating panel is at most **368 × 368 points**, with eight 64-point square tiles arranged by direction. Up/down pairs are stacked vertically; left/right pairs are horizontal. The four arms align on a regular grid around a 64-point empty center, with 6-point gaps between cells. The horizontal center gap includes the two adjacent gaps (76 points total). Background material is applied to each tile, not to the whole panel, so the center and corners remain transparent. Slot 1 is always nearest the center and slot 2 extends outward: visual order is reversed for Up and Left, without changing saved assignments or launch order. There is no center icon, header, footer, or instructional text; the selected tile has a coral border. Direction and slot labels remain available to Accessibility. It does not steal focus or add a Dock icon on its own.
 - Other buttons are consumed and cursor movement is suppressed while the overlay is visible.
 
@@ -149,7 +149,7 @@ make test-navigation-ui
 | `launcher` | Directions, two slots, empty slots, and reset |
 | `scroll` | Directions, sensitivity, bounds, fractional deltas, and cursor restoration |
 | `dock` | Showing the Dock icon with settings, closing, and reopening |
-| `launcher-ui` | Routing, automatic launching, dismissal, and overlay preview |
+| `launcher-ui` | Delayed latest-selection launching, deadline reset, one-shot delivery, cancellation safety, and overlay preview |
 | `navigation` | Direction scoring, row/column preference, boundaries, invalid rectangles, and multiple-display coordinates |
 | `navigation-ui` | D-pad/left-stick routing, coalesced repeats, mode switching, activation/back, shortcut isolation, pause, and preserved assignments |
 | `stick` | Four directions, thresholds, diagonal hysteresis, repeat timing, single-shot launching, and recenter safety |
@@ -175,7 +175,7 @@ The fixture inspects and acts **only on its own window**, even if another app be
 - [ ] R1 scrolling in all directions, sensitivity changes, and cursor restoration.
 - [ ] Held shortcuts and modifier-only ⌥⇧, including a voice assistant.
 - [ ] Tap/hold behavior and pausing before/after the threshold.
-- [ ] Automatic launcher opening, second slot, direction changes, and timeout.
+- [ ] Launcher selection delay, second slot, deadline reset, ○ cancellation, and timeout.
 - [ ] No normal ✕/○ shortcut while the overlay is visible.
 - [ ] Select/Create switches launcher/navigation without running its saved assignment; touchpad click runs its configured action.
 - [ ] Left-stick directions, held repeat, recentering, and independent right-stick mouse control.

@@ -402,10 +402,10 @@ private struct SettingsView: View {
     }
     private var launcherSettings: some View {
         VStack(alignment: .leading, spacing: 20) {
-            heading("Directional navigation", detail: "Use the D-pad or left stick to open an app. Repeat the same direction while the overlay is visible to open the second.")
+            heading("Directional navigation", detail: "Use the D-pad or left stick to select an app. It opens after 0.5 seconds; changing selection restarts the delay.")
             HStack(spacing: 18) {
-                Label("Instant launch · no confirmation", systemImage: "bolt.fill")
-                Label("○ dismisses the overlay", systemImage: "xmark.circle")
+                Label("Opens after 0.5 s · no confirmation", systemImage: "bolt.fill")
+                Label("○ cancels the pending launch", systemImage: "xmark.circle")
             }.font(.system(size: 11)).foregroundColor(.secondary)
             ForEach(0..<4, id: \.self) { direction in
                 VStack(alignment: .leading, spacing: 12) {
@@ -435,7 +435,7 @@ private struct SettingsView: View {
                     }
                 }.padding(18).card(radius: 8)
             }
-            Text("Controller input must be enabled. The overlay disappears after 1.2 seconds. Directions open apps; ✕ and ○ do not run their normal shortcuts while it is visible. Previous D-pad assignments remain stored; previously assigned apps are migrated to slot 1.")
+            Text("Controller input must be enabled. The overlay disappears after 1.2 seconds. The selected app opens after 0.5 seconds; ✕ and ○ do not run their normal shortcuts while it is visible. Previous D-pad assignments remain stored; previously assigned apps are migrated to slot 1.")
                 .font(.system(size: 10)).foregroundColor(.secondary).lineSpacing(3)
         }
     }
@@ -447,7 +447,7 @@ private struct SettingsView: View {
                     Text("App launcher").tag(false)
                     Text("UI navigation").tag(true)
                 }.pickerStyle(.segmented)
-                Label(model.uiNavigationEnabled ? model.navigationStatus : "Directions open your assigned apps.", systemImage: model.uiNavigationEnabled ? "viewfinder" : "arrow.up.and.down.and.arrow.left.and.right")
+                Label(model.uiNavigationEnabled ? model.navigationStatus : "Select an app; it opens after 0.5 seconds.", systemImage: model.uiNavigationEnabled ? "viewfinder" : "arrow.up.and.down.and.arrow.left.and.right")
                     .font(.system(size: 12)).foregroundColor(.secondary).lineLimit(3)
             }.padding(16).card()
             heading("Navigate the active window", detail: "Uses macOS Accessibility. No cursor movement or coordinate clicks.")
@@ -458,7 +458,7 @@ private struct SettingsView: View {
                 Divider()
                 instruction("arrow.uturn.backward", title: "○ goes back", detail: "Requests the native Cancel action, or sends Escape if the app does not support it.")
             }.padding(16).card()
-            Text("Left stick: tilt beyond 55% to navigate; return near the center to reset. UI navigation repeats after 0.38 seconds, then every 0.18 seconds. The launcher opens only once per tilt. L3 remains customizable; the right stick still controls the mouse.")
+            Text("Left stick: tilt beyond 55% to navigate; return near the center to reset. UI navigation repeats after 0.38 seconds, then every 0.18 seconds. The launcher selects once per tilt and opens after 0.5 seconds. L3 remains customizable; the right stick still controls the mouse.")
                 .font(.system(size: 11)).foregroundColor(.secondary)
             heading("Compatibility", detail: "Experimental: apps must expose their controls through Accessibility.")
             Text("Only visible, enabled controls in the active window, sheet, or focused menu are considered. Custom canvases and some web content may not expose enough information. The right stick, touchpad, and triggers remain available as a mouse fallback. Text entry and detailed slider editing still require the keyboard or mouse.")

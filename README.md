@@ -34,7 +34,7 @@
 | **Custom shortcuts** | Record your own combination, including modifier-only chords such as ⌥⇧. |
 | **Push-to-talk** | Keep the shortcut pressed for as long as you hold the controller button. |
 | **Long press** | Assign a second shortcut to the same button. |
-| **Directional launcher** | Four directions, up to two apps per direction. Launch instantly. |
+| **Directional launcher** | Four directions, up to two apps per direction. Open after a 0.5-second selection delay. |
 | **UI navigation** | Select controls in the active app with the D-pad or left stick and activate them with ✕. No mouse aiming. |
 
 A **native SwiftUI interface**, dark/light/system themes, and automatically saved preferences. The app requires no server, account, or web service.
@@ -43,7 +43,7 @@ A **native SwiftUI interface**, dark/light/system themes, and automatically save
 
 ### An app launcher that feels like a HUD
 
-Press a direction to open the app immediately. A compact **368 × 368-point** overlay shows app tiles in a cross around an empty center, with transparent space between the arms and a coral border around your selection. Press the same direction again while it is visible to switch to the second app. It disappears after **1.2 seconds**—no confirmation button required.
+Press a direction to select an app. It opens **0.5 seconds after the last selection**; changing selection restarts the delay, and **○ cancels** a pending launch. A compact **368 × 368-point** overlay shows app tiles in a cross around an empty center, with transparent space between the arms and a coral border around your selection. Press the same direction again while it is visible to switch to the second app. It disappears after **1.2 seconds**—no confirmation button required.
 
 <p align="center">
   <img src="docs/screenshots/launcher-overlay.png" width="400" alt="Punto’s compact overlay with two apps in each of four directions">
@@ -95,9 +95,9 @@ Choose up to **eight applications**, arranged across up, right, down, and left.
 | **R1 + right stick** | Scroll vertically and horizontally |
 | **R2** | Left click; hold to drag |
 | **L2** | Right click; hold to drag |
-| **↑ → ↓ ←** | Launcher: open an app. UI navigation: select a control. |
+| **↑ → ↓ ←** | Launcher: select an app (opens after 0.5 s). UI navigation: select a control. |
 | **✕ / ○ in UI navigation** | Activate the selection / go back |
-| **○ while the overlay is visible** | Dismiss the visual feedback |
+| **○ while the overlay is visible** | Cancel a pending launch and dismiss the overlay |
 | **Options** | Enable or pause controller input |
 | Other buttons | Custom shortcuts or application actions |
 
