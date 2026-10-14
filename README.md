@@ -114,13 +114,11 @@ Choose up to **eight applications**, arranged across up, right, down, and left.
 ### Build and run
 
 ```sh
-git clone git@github.com:guglielmobartelloni/Punto.git
+git clone https://github.com/guglielmobartelloni/Punto.git
 cd Punto
 make
 open build/Punto.app
 ```
-
-This repository is private. Cloning requires an authorized GitHub account.
 
 ### First-time setup
 
