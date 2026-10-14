@@ -34,6 +34,9 @@ int main(void){@autoreleasepool{
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
     assert(!delegate.launchedPath&&[delegate.pendingLauncherPath isEqual:up[0]]);
     assert(delegate.launcherOpenedTime==0&&[[delegate settingsSnapshot][@"launcherLaunchTime"] doubleValue]>0);
+    NSPanel *initialPanel=delegate.launcherPanel;
+    NSView *initialHost=initialPanel.contentView;
+    NSRect initialFrame=initialPanel.frame;
     double firstDeadline=delegate.launcherLaunchTime;
     [delegate updateLauncherAtTime:firstDeadline-0.01 trusted:YES];assert(delegate.launchCount==0);
     assert(application.activationPolicy==NSApplicationActivationPolicyAccessory);
@@ -44,6 +47,8 @@ int main(void){@autoreleasepool{
     assert([delegate handleButton:15 pressed:NO]);
     [delegate handleButton:15 pressed:YES];
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==1);
+    assert(delegate.launcherPanel==initialPanel&&delegate.launcherPanel.contentView==initialHost);
+    assert(delegate.launcherPanel.isVisible&&NSEqualRects(delegate.launcherPanel.frame,initialFrame));
     assert(!delegate.launchedPath&&[delegate.pendingLauncherPath isEqual:up[1]]);
     assert(delegate.launcherLaunchTime>firstDeadline);
     [delegate updateLauncherAtTime:firstDeadline trusted:YES];assert(delegate.launchCount==0);

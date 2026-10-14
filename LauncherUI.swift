@@ -8,20 +8,21 @@ struct PuntoLauncherView: View {
     private let names = ["Up", "Right", "Down", "Left"]
 
     var body: some View {
-        VStack(spacing: 6) {
-            direction(0)
-            HStack(spacing: 0) {
-                direction(3)
-                Color.clear.frame(width: 76, height: 64).accessibilityHidden(true)
-                direction(1)
+        // Keep one stable animation clock; changing selection never replaces tile hosts.
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !model.launcherVisible)) { _ in
+            VStack(spacing: 6) {
+                direction(0)
+                HStack(spacing: 0) {
+                    direction(3)
+                    Color.clear.frame(width: 76, height: 64).accessibilityHidden(true)
+                    direction(1)
+                }
+                direction(2)
             }
-            direction(2)
+            .padding(12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .foregroundColor(.white).preferredColorScheme(.dark)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .foregroundColor(.white).preferredColorScheme(.dark)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: model.launcherDirection)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: model.launcherSlot)
     }
 
     @ViewBuilder private func direction(_ index: Int) -> some View {
@@ -37,9 +38,7 @@ struct PuntoLauncherView: View {
             // Slot 1 is nearest the center; slot 2 extends outward.
             ForEach(index == 0 || index == 3 ? [1, 0] : [0, 1], id: \.self) { slot in
                 let selected = model.launcherDirection == index && model.launcherSlot == slot
-                TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !selected || !model.launcherVisible)) { _ in
-                    tile(index, slot: slot, selected: selected, now: ProcessInfo.processInfo.systemUptime)
-                }
+                tile(index, slot: slot, selected: selected, now: ProcessInfo.processInfo.systemUptime)
             }
         }
     }

@@ -235,12 +235,14 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     for(int i=0;i<4;i++){NSArray *apps=[self launcherApps:i];for(int j=0;j<2;j++)available[i][j]=[apps[j] length]>0;}
     launcher_select(&_launcher,(int)direction,available);
     input_suppress_pointer(true);
-    if(!self.launcherPanel)self.launcherPanel=[PadMacUI makeLauncherWithController:self];
-    [self.launcherPanel center];[self.launcherPanel orderFrontRegardless];
     double now=NSProcessInfo.processInfo.systemUptime;
     self.launcherHideTime=now+1.2;self.launcherOpenedTime=0;
     self.pendingLauncherPath=[self launcherApps:_launcher.direction][_launcher.slot];
     self.launcherLaunchTime=self.pendingLauncherPath.length?now+0.5:0;
+    if(!self.launcherPanel){
+        self.launcherPanel=[PadMacUI makeLauncherWithController:self];
+        [self.launcherPanel center];[self.launcherPanel orderFrontRegardless];
+    }
 }
 - (void)hideLauncher {
     self.launcherHideTime=0;self.launcherLaunchTime=0;self.launcherOpenedTime=0;self.pendingLauncherPath=nil;launcher_reset(&_launcher);[self.launcherPanel orderOut:nil];
