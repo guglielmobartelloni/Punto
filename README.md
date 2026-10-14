@@ -35,7 +35,7 @@
 | **Push-to-talk** | Keep the shortcut pressed for as long as you hold the controller button. |
 | **Long press** | Assign a second shortcut to the same button. |
 | **Directional launcher** | Four directions, up to two apps per direction. Launch instantly. |
-| **UI navigation** | Select controls in the active app with the D-pad and activate them with ✕. No mouse aiming. |
+| **UI navigation** | Select controls in the active app with the D-pad or left stick and activate them with ✕. No mouse aiming. |
 
 A **native SwiftUI interface**, dark/light/system themes, and automatically saved preferences. The app requires no server, account, or web service.
 
@@ -70,7 +70,7 @@ Adjust cursor speed, stick deadzone, and scroll sensitivity. Scroll speed is ind
 
 ### Navigate apps like a game menu
 
-Choose **Navigation → UI navigation**, or press **Select / Create** (the small button to the left of the touchpad) while input is enabled. The D-pad moves a coral selection border between accessible controls; **✕ activates** and **○ goes back**. Press Select / Create again to restore the launcher.
+Choose **Navigation → UI navigation**, or press **Select / Create** (the small button to the left of the touchpad) while input is enabled. The D-pad or left stick moves a coral selection border between accessible controls; **✕ activates** and **○ goes back**. Hold the left stick to keep navigating; in the launcher, each tilt opens an app only once. Press Select / Create again to restore the launcher.
 
 This feature is **experimental** and uses the app’s native macOS Accessibility elements—not simulated coordinate clicks. Custom canvases and some web content may not expose usable controls. Mouse control remains available as a fallback; text entry still needs a keyboard.
 
@@ -89,6 +89,7 @@ Choose up to **eight applications**, arranged across up, right, down, and left.
 | Controller input | Action |
 | :--- | :--- |
 | Right stick | Move the cursor |
+| **Left stick** | Navigate controls or launch apps; hold to repeat in UI navigation |
 | Touchpad | Move the cursor with one finger |
 | **Select / Create** | Switch between the launcher and UI navigation |
 | **R1 + right stick** | Scroll vertically and horizontally |

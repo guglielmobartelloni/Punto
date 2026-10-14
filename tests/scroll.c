@@ -7,6 +7,10 @@ void input_test_scroll(int vertical,int horizontal){scrollEvents++;totalVertical
 void input_test_pointer(double dx,double dy){assert(dx!=0||dy!=0);pointerEvents++;}
 int main(void){
     active=(IOHIDDeviceRef)(uintptr_t)1;input_enable(true);
+    double horizontal=0,vertical=0;leftX=0.9;leftY=-0.8;input_left_stick(&horizontal,&vertical);
+    assert(horizontal==0.9&&vertical==-0.8&&x==0&&y==0);
+    input_suppress_pointer(true);input_left_stick(&horizontal,&vertical);assert(horizontal==0.9&&vertical==-0.8);
+    input_suppress_pointer(false);input_left_stick(NULL,NULL);
     x=0;y=1;input_scroll_mode(true);assert(input_scroll_active());
     input_tick(1.0/60,1100,0.12);
     assert(scrollEvents==1&&totalVertical==-15&&totalHorizontal==0&&pointerEvents==0);
@@ -33,9 +37,11 @@ int main(void){
     input_tick(1.0/60,1100,0.12);assert(scrollEvents==previous&&!input_scroll_active());
     input_suppress_pointer(false);input_release_actions();assert(!input_scroll_active());
     input_scroll_mode(true);input_enable(false);assert(!input_scroll_active());
+    input_left_stick(&horizontal,&vertical);assert(horizontal==0&&vertical==0&&leftX==0&&leftY==0);
     input_scroll_mode(true);assert(!input_scroll_active());
     input_enable(true);input_scroll_mode(true);removed(NULL,0,NULL,active);assert(!input_scroll_active());
+    input_left_stick(&horizontal,&vertical);assert(horizontal==0&&vertical==0);
     input_stop();
-    puts("PASS: R1 scroll mode, vertical/horizontal directions, adjustable sensitivity, bounds, smooth fractions, deadzone, cursor restore, safety reset");
+    puts("PASS: independent left-stick axes and safety reset, R1 scroll mode, vertical/horizontal directions, adjustable sensitivity, bounds, smooth fractions, deadzone, cursor restore, safety reset");
     return 0;
 }

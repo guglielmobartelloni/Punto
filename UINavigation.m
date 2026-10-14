@@ -87,7 +87,7 @@ static id focusedRoot(AXUIElementRef app,id *window,id *focused){
     if(atomic_exchange(&_active,active)==active)return;
     self.generation++;[self.commands removeAllObjects];[self clearSelection];
     self.status=active?@"Press a direction to select a control.":@"UI navigation is paused.";
-    if(active)[self showMessage:@"UI navigation · D-pad selects · ✕ activates · ○ goes back"];
+    if(active)[self showMessage:@"D-pad / Left stick selects · ✕ activates · ○ goes back"];
 }
 - (void)showMessage:(NSString *)message{
     NSTextField *label=[NSTextField labelWithString:message];label.frame=NSMakeRect(16,10,448,36);
@@ -101,6 +101,15 @@ static id focusedRoot(AXUIElementRef app,id *window,id *focused){
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW,2500*NSEC_PER_MSEC),dispatch_get_main_queue(),^{if(version==self.messageVersion)[self.messagePanel orderOut:nil];});
 }
 - (void)move:(NSInteger)direction{if(direction>=0&&direction<4)[self enqueue:direction];}
+- (void)stopStickNavigation{
+    for(NSInteger i=(NSInteger)self.commands.count-1;i>=0;i--)if(self.commands[i].integerValue>=10)[self.commands removeObjectAtIndex:(NSUInteger)i];
+}
+- (void)moveFromStick:(NSInteger)direction{
+    if(!self.active||direction<0||direction>3)return;
+    [self stopStickNavigation];
+    if(self.busy){if(self.commands.count<8)[self.commands addObject:@(10+direction)];}
+    else [self request:direction];
+}
 - (void)activateSelection{[self enqueue:4];}
 - (void)goBack{[self enqueue:5];}
 - (void)enqueue:(NSInteger)command{
@@ -110,7 +119,7 @@ static id focusedRoot(AXUIElementRef app,id *window,id *focused){
 }
 - (void)drain{
     if(!self.active||self.busy||!self.commands.count)return;
-    NSInteger command=self.commands.firstObject.integerValue;[self.commands removeObjectAtIndex:0];[self request:command];
+    NSInteger command=self.commands.firstObject.integerValue;[self.commands removeObjectAtIndex:0];[self request:command>=10?command-10:command];
 }
 - (void)poll{
     double now=NSProcessInfo.processInfo.systemUptime;

@@ -6,6 +6,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(atomic,getter=isActive) BOOL active;
 @property(nonatomic,copy,nullable) dispatch_block_t backFallback;
 - (void)move:(NSInteger)direction;
+- (void)moveFromStick:(NSInteger)direction;
+- (void)stopStickNavigation;
 - (void)activateSelection;
 - (void)goBack;
 - (void)poll;

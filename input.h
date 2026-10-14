@@ -3,6 +3,7 @@
 void input_start(void);
 void input_stop(void);
 void input_tick(double seconds, double speed, double deadzone);
+void input_left_stick(double *horizontal,double *vertical);
 void input_enable(bool enabled);
 void input_release_actions(void);
 void input_suppress_pointer(bool suppressed);

@@ -8,11 +8,13 @@
 #import "longpress.h"
 #import "launcher.h"
 #import "UINavigation.h"
+#import "stick.h"
 #import "UIController.h"
 #import "build/PadMacUI-Swift.h"
 
 @interface App : NSObject <NSApplicationDelegate,NSWindowDelegate,PadMacUIController> {
     LauncherState _launcher;
+    StickNavigation _leftStick;
 }
 @property PuntoUINavigation *uiNavigation;
 @property BOOL navigationMode;
@@ -42,7 +44,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     (void)note;currentApp=self;
     NSUserDefaults *d=NSUserDefaults.standardUserDefaults;PadMacMigrateShortcuts(d);
     [d registerDefaults:@{@"speed":@1100,@"zone":@0.12,@"scrollSpeed":@900}];
-    launcher_reset(&_launcher);
+    launcher_reset(&_launcher);stick_navigation_reset(&_leftStick);
     self.navigationMode=[d boolForKey:@"uiNavigation"];
     self.uiNavigation=[PuntoUINavigation new];
     __weak App *weakSelf=self;
@@ -142,6 +144,11 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     if(![self validButton:index])return;input_enable(false);
     [NSUserDefaults.standardUserDefaults removeObjectForKey:[self holdKey:index]];
 }
+- (void)navigateStickDirection:(NSInteger)direction {
+    if(direction<0||direction>3||!input_enabled())return;
+    if(self.navigationMode)[self.uiNavigation moveFromStick:direction];
+    else [self selectLauncherDirection:direction];
+}
 - (void)saveNavigationMode {[NSUserDefaults.standardUserDefaults setBool:self.navigationMode forKey:@"uiNavigation"];}
 - (void)setUINavigationEnabled:(BOOL)enabled {
     input_release_actions();[self hideLauncher];
@@ -149,7 +156,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     self.uiNavigation.active=enabled&&input_enabled()&&AXIsProcessTrusted();
 }
 - (BOOL)handleButton:(int)index pressed:(BOOL)pressed {
-    if(index<0){longpress_cancel(hold_event);[self hideLauncher];self.uiNavigation.active=NO;return YES;}
+    if(index<0){longpress_cancel(hold_event);[self hideLauncher];self.uiNavigation.active=NO;stick_navigation_reset(&_leftStick);return YES;}
     if(index==8){if(pressed)[self setUINavigationEnabled:!self.navigationMode];return YES;}
     if(self.navigationMode&&(index>=15||index==1||index==2)){
         self.uiNavigation.active=input_enabled()&&AXIsProcessTrusted();
@@ -254,6 +261,13 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     input_tick(dt,self.speed,self.deadzone);
     self.uiNavigation.active=self.navigationMode&&input_enabled()&&trusted;
     [self.uiNavigation poll];
+    if(input_enabled()){
+        double horizontal=0,vertical=0;input_left_stick(&horizontal,&vertical);
+        int previous=_leftStick.direction;
+        int direction=stick_navigation_step(&_leftStick,horizontal,vertical,now,self.navigationMode);
+        if(previous>=0&&_leftStick.direction<0)[self.uiNavigation stopStickNavigation];
+        if(direction>=0)[self navigateStickDirection:direction];
+    }else stick_navigation_reset(&_leftStick);
 }
 - (void)toggleControl {
     if(input_enabled()){input_enable(false);return;}

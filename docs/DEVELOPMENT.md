@@ -17,6 +17,7 @@ Run commands from the project root. The build uses Apple Command Line Tools; ful
 | `longpress.c` | Tap versus long-press state machine |
 | `launcher.c` | Directional selection and two-slot cycling |
 | `navigation.c` | Geometric directional scoring, independent of Accessibility |
+| `stick.c` | Left-stick direction hysteresis, repeat timing, and recenter safety |
 | `UINavigation.m` | Asynchronous AX discovery, safe native actions, and non-activating selection overlay |
 | `ShortcutRecorder.m` | Shortcut recording and preference migration |
 | `scripts/generate-brand-icon.swift` | macOS icon generation |
@@ -107,7 +108,7 @@ Apps previously assigned to D-pad buttons are migrated into the first slot. Prev
 
 Select **Navigation → UI navigation**, or press **Select / Create** (the small button to the left of the touchpad) while controller input is enabled. Mode selection persists in `uiNavigation`; controller input still starts paused.
 
-- The D-pad selects accessible controls in the frontmost app’s focused window, modal sheet, or focused menu. The first press selects the focused control if available, otherwise the first discovered control.
+- The D-pad or left stick selects accessible controls in the frontmost app’s focused window, modal sheet, or focused menu. The first press selects the focused control if available, otherwise the first discovered control.
 - Subsequent presses rank element centers in a directional cone, favoring the same row or column. At a boundary the selection remains in place; it does not wrap.
 - Disabled, hidden, off-screen, and out-of-viewport controls are excluded when the provider supplies the necessary information.
 - **✕** invokes `AXPress`, `AXConfirm`, or `AXPick`; editable fields use the settable `AXFocused` attribute. No coordinate-click fallback is used.
@@ -117,6 +118,9 @@ Select **Navigation → UI navigation**, or press **Select / Create** (the small
 - A lighter 250 ms poll tracks the selection. Activation rescans and revalidates the element, app, and window; stale elements are rejected rather than blindly clicked. Selection is retained if the control remains visible after activation. Some providers return an error even after dispatching an action; ambiguous results are shown as “Action requested” and are never retried automatically.
 - An eight-command queue preserves rapid presses. App/window changes discard queued commands. Generation checks invalidate pending actions on pause, disconnect, permission loss, or mode changes.
 - Switching modes releases held mouse buttons/keys and cancels long presses. Existing launcher, Select/Create, ✕, and ○ assignments remain stored. Select/Create is reserved; touchpad click is customizable; ✕ and ○ regain normal assignments outside navigation mode.
+- Left-stick HID X/Y axes are independent of the right stick’s Z/Rz axes. Navigation engages at 55% deflection, recenters at 30%, and uses sector hysteresis to suppress diagonal jitter.
+- In UI navigation, the left stick repeats after 380 ms, then every 180 ms. Analog repeats are coalesced to one pending move and canceled when the stick recenters, without discarding digital presses. In the launcher, each tilt opens an app once; another tilt requires recentering.
+- Pausing, disconnecting, changing modes, and entering the launcher reset the stick state; recentering is required before a new navigation gesture. L3’s click assignment remains customizable.
 - The right stick, touchpad movement, R1 scrolling, and trigger clicks remain available as a mouse fallback.
 
 This is not universal semantic navigation: app Accessibility providers determine coverage, grouping, visibility, and action support. Custom canvases and some browser content are incomplete. Text entry, complex slider editing, virtualized lists, and automatic scrolling to off-screen controls are not implemented. No window content or discovered control labels are logged or persisted by the runtime.
@@ -147,7 +151,8 @@ make test-navigation-ui
 | `dock` | Showing the Dock icon with settings, closing, and reopening |
 | `launcher-ui` | Routing, automatic launching, dismissal, and overlay preview |
 | `navigation` | Direction scoring, row/column preference, boundaries, invalid rectangles, and multiple-display coordinates |
-| `navigation-ui` | Mode switching, activation/back routing, shortcut isolation, pause, and preserved assignments |
+| `navigation-ui` | D-pad/left-stick routing, coalesced repeats, mode switching, activation/back, shortcut isolation, pause, and preserved assignments |
+| `stick` | Four directions, thresholds, diagonal hysteresis, repeat timing, single-shot launching, and recenter safety |
 
 UI suites require a macOS graphical session. The launcher test uses isolated volatile preferences and intercepts app launches: **it does not change assignments or open demo applications**.
 
@@ -173,6 +178,8 @@ The fixture inspects and acts **only on its own window**, even if another app be
 - [ ] Automatic launcher opening, second slot, direction changes, and timeout.
 - [ ] No normal ✕/○ shortcut while the overlay is visible.
 - [ ] Select/Create switches launcher/navigation without running its saved assignment; touchpad click runs its configured action.
+- [ ] Left-stick directions, held repeat, recentering, and independent right-stick mouse control.
+- [ ] Launcher opens once per tilt and does not cycle repeatedly while held.
 - [ ] Navigation selects controls spatially and activates them in the intended target apps.
 - [ ] The border does not take focus, intercept clicks, or appear in the Dock.
 - [ ] App/window changes, pause, disconnect, and permission loss clear the selection.

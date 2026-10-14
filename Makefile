@@ -6,11 +6,15 @@ ARCH := $(shell uname -m)
 TARGET := $(ARCH)-apple-macos12.0
 SIGN_IDENTITY := PadMac Local Development
 CFLAGS := -Wall -Wextra -Werror -O2 -mmacosx-version-min=12.0
-NAV_OBJECTS := build/navigation.o build/UINavigation.o
+NAV_OBJECTS := build/navigation.o build/UINavigation.o build/stick.o
 FRAMEWORKS := -framework Cocoa -framework SwiftUI -framework ApplicationServices -framework IOKit -framework UniformTypeIdentifiers
 
 .PHONY: all run clean test test-dock test-launcher-ui test-navigation-ui test-navigation-ax
 all: $(APP)/Contents/MacOS/Punto
+
+build/stick.o: stick.c stick.h
+	mkdir -p build
+	$(CC) $(CFLAGS) -c stick.c -o $@
 
 build/navigation.o: navigation.c navigation.h
 	mkdir -p build
@@ -45,7 +49,7 @@ build/UI.o: UI.swift LauncherUI.swift UIController.h Makefile
 	mkdir -p build
 	$(SWIFTC) -target $(TARGET) -O -whole-module-optimization -parse-as-library -module-name PadMacUI -import-objc-header UIController.h -emit-objc-header -emit-objc-header-path build/PadMacUI-Swift.h -emit-object UI.swift LauncherUI.swift -o $@
 
-build/main.o: main.m input.h keyboard.h longpress.h launcher.h UINavigation.h UIController.h ShortcutRecorder.h build/UI.o
+build/main.o: main.m input.h keyboard.h longpress.h launcher.h UINavigation.h stick.h UIController.h ShortcutRecorder.h build/UI.o
 	$(CC) $(CFLAGS) -fobjc-arc -c main.m -o $@
 
 build/ShortcutRecorder.o: ShortcutRecorder.m ShortcutRecorder.h
@@ -78,6 +82,8 @@ test:
 	./build/test-scroll
 	$(CC) $(CFLAGS) tests/navigation.c navigation.c -o build/test-navigation
 	./build/test-navigation
+	$(CC) $(CFLAGS) tests/stick.c stick.c -o build/test-stick
+	./build/test-stick
 
 test-dock: $(NAV_OBJECTS) build/UI.o build/ShortcutRecorder.o build/input.o build/keyboard.o build/longpress.o build/launcher.o
 	$(CC) $(CFLAGS) -fobjc-arc -c tests/dock.m -o build/test-dock.o

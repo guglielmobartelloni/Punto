@@ -25,7 +25,7 @@ private enum Page: String, CaseIterable, Identifiable {
         switch self {
         case .buttons: return "Assign apps and shortcuts to your controller buttons."
         case .launcher: return "Four directions. Two apps per direction."
-        case .navigation: return "Select app controls with the D-pad, without aiming the mouse."
+        case .navigation: return "Select app controls with the D-pad or left stick, without aiming the mouse."
         case .mouse: return "Customize cursor movement and scrolling."
         case .permissions: return "Manage Punto’s access to your Mac."
         }
@@ -322,7 +322,7 @@ private struct SettingsView: View {
             Divider()
             HStack(spacing: 8) {
                 Image(systemName: "info.circle").foregroundColor(.secondary)
-                Text("D-pad → Launcher / Navigation · Select / Create → switch mode · Options → enable / pause")
+                Text("D-pad / Left stick → Launcher / Navigation · Select / Create → switch · Options → pause")
                     .font(.system(size: 10)).foregroundColor(.secondary)
                 Spacer(minLength: 0)
                 Button { showHelp.toggle() } label: { Image(systemName: "questionmark.circle").foregroundColor(.secondary) }.buttonStyle(.plain)
@@ -402,7 +402,7 @@ private struct SettingsView: View {
     }
     private var launcherSettings: some View {
         VStack(alignment: .leading, spacing: 20) {
-            heading("Directional navigation", detail: "Press a direction to open an app. Press it again while the overlay is visible to open the second.")
+            heading("Directional navigation", detail: "Use the D-pad or left stick to open an app. Repeat the same direction while the overlay is visible to open the second.")
             HStack(spacing: 18) {
                 Label("Instant launch · no confirmation", systemImage: "bolt.fill")
                 Label("○ dismisses the overlay", systemImage: "xmark.circle")
@@ -441,7 +441,7 @@ private struct SettingsView: View {
     }
     private var navigationSettings: some View {
         VStack(alignment: .leading, spacing: 16) {
-            heading("D-pad behavior", detail: "Press Select / Create to switch modes while controller input is enabled.")
+            heading("Directional controls", detail: "Press Select / Create to switch modes while controller input is enabled.")
             VStack(alignment: .leading, spacing: 12) {
                 Picker("Mode", selection: Binding(get: { model.uiNavigationEnabled }, set: { model.controller.setUINavigationEnabled($0); model.refresh() })) {
                     Text("App launcher").tag(false)
@@ -452,12 +452,14 @@ private struct SettingsView: View {
             }.padding(16).card()
             heading("Navigate the active window", detail: "Uses macOS Accessibility. No cursor movement or coordinate clicks.")
             VStack(alignment: .leading, spacing: 14) {
-                instruction("arrow.up.and.down.and.arrow.left.and.right", title: "D-pad selects controls", detail: "The first press selects the focused or first available control. Further presses select the nearest control in that direction. A coral border shows your selection.")
+                instruction("arrow.up.and.down.and.arrow.left.and.right", title: "D-pad or left stick selects controls", detail: "Press a direction or tilt the left stick to select a control. Hold the stick to keep moving through controls. A coral border shows your selection.")
                 Divider()
                 instruction("xmark.circle", title: "✕ activates the selection", detail: "Press a button, select a tab, or focus an editable field using its native Accessibility action.")
                 Divider()
                 instruction("arrow.uturn.backward", title: "○ goes back", detail: "Requests the native Cancel action, or sends Escape if the app does not support it.")
             }.padding(16).card()
+            Text("Left stick: tilt beyond 55% to navigate; return near the center to reset. UI navigation repeats after 0.38 seconds, then every 0.18 seconds. The launcher opens only once per tilt. L3 remains customizable; the right stick still controls the mouse.")
+                .font(.system(size: 11)).foregroundColor(.secondary)
             heading("Compatibility", detail: "Experimental: apps must expose their controls through Accessibility.")
             Text("Only visible, enabled controls in the active window, sheet, or focused menu are considered. Custom canvases and some web content may not expose enough information. The right stick, touchpad, and triggers remain available as a mouse fallback. Text entry and detailed slider editing still require the keyboard or mouse.")
                 .font(.system(size: 12)).foregroundColor(.secondary)

@@ -6,7 +6,7 @@
 
 static IOHIDManagerRef manager;
 static IOHIDDeviceRef active;
-static double x, y;
+static double x,y,leftX,leftY;
 static uint8_t reportBuffer[512];
 static bool touching;
 static int touchX, touchY, touchID;
@@ -48,7 +48,7 @@ void input_release_actions(void) {
     held[0]=held[1]=false;touching=false;
 }
 void input_enable(bool on) {
-    input_release_actions();pointerSuppressed=false;enabled=on;x=y=0;
+    input_release_actions();pointerSuppressed=false;enabled=on;x=y=leftX=leftY=0;
 }
 void input_mapping(int i,int key,unsigned long long mods) {if(i>=0&&i<4){keys[i]=key;flags[i]=mods;}}
 void input_modifier_shortcut(unsigned long long modifiers){
@@ -107,11 +107,14 @@ static void value(void *ctx,IOReturn result,void *sender,IOHIDValueRef v) {
         button(17,direction==3||direction==4||direction==5); // Down
         button(18,direction==5||direction==6||direction==7); // Left
     }
-    if(page==kHIDPage_GenericDesktop && (usage==kHIDUsage_GD_Z||usage==kHIDUsage_GD_Rz)){
+    if(page==kHIDPage_GenericDesktop && (usage==kHIDUsage_GD_X||usage==kHIDUsage_GD_Y||usage==kHIDUsage_GD_Z||usage==kHIDUsage_GD_Rz)){
         double min=IOHIDElementGetLogicalMin(e),max=IOHIDElementGetLogicalMax(e);
         if(max<=min)return;
-        double a=2.0*(n-min)/(max-min)-1;
-        if(usage==kHIDUsage_GD_Z)x=a;else y=a;
+        double a=fmax(-1,fmin(1,2.0*(n-min)/(max-min)-1));
+        if(usage==kHIDUsage_GD_X)leftX=a;
+        else if(usage==kHIDUsage_GD_Y)leftY=a;
+        else if(usage==kHIDUsage_GD_Z)x=a;
+        else y=a;
     }
 }
 // DualSense USB (0x01) and full Bluetooth (0x31) input reports.
@@ -136,7 +139,7 @@ static void report(void *ctx, IOReturn result, void *sender,
 }
 static void added(void *ctx,IOReturn result,void *sender,IOHIDDeviceRef device){
     (void)ctx;(void)sender;if(result==kIOReturnSuccess&&!active){
-        active=device;x=y=0;touching=false;
+        active=device;x=y=leftX=leftY=0;touching=false;
         IOHIDDeviceRegisterInputReportCallback(device,reportBuffer,sizeof(reportBuffer),report,device);
     }
 }
@@ -195,6 +198,10 @@ static void move_pointer(double dx,double dy){
     CGEventRef e=CGEventCreateMouseEvent(NULL,type,p,held[0]?kCGMouseButtonLeft:held[1]?kCGMouseButtonRight:kCGMouseButtonLeft);
     if(e){CGEventPost(kCGHIDEventTap,e);CFRelease(e);}
 #endif
+}
+void input_left_stick(double *horizontal,double *vertical){
+    if(horizontal)*horizontal=enabled&&active?leftX:0;
+    if(vertical)*vertical=enabled&&active?leftY:0;
 }
 bool input_connected(void){return active!=NULL;}
 bool input_enabled(void){return enabled;}
