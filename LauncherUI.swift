@@ -47,9 +47,6 @@ struct PuntoLauncherView: View {
     private func tile(_ index: Int, slot: Int, selected: Bool, now: Double) -> some View {
         let path = model.launcherApps[index][slot]
         let title = path.isEmpty ? "—" : FileManager.default.displayName(atPath: path)
-        let progress = model.launcherLaunchTime > 0
-            ? min(1, max(0, 1 - (model.launcherLaunchTime - now) / 0.5))
-            : (model.launcherOpenedTime > 0 ? 1.0 : 0.0)
         let elapsed = now - model.launcherOpenedTime
         let pulse = selected && model.launcherOpenedTime > 0 && elapsed >= 0 && elapsed < 0.28
             ? sin(.pi * elapsed / 0.28) : 0.0
@@ -74,13 +71,6 @@ struct PuntoLauncherView: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 9))
         .overlay(RoundedRectangle(cornerRadius: 9).stroke(selected ? coral.opacity(0.28) : .white.opacity(0.09), lineWidth: selected ? 1.5 : 1))
-        .overlay {
-            if selected && !path.isEmpty {
-                RoundedRectangle(cornerRadius: 9).trim(from: 0, to: progress)
-                    .stroke(coral, style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                    .rotationEffect(.degrees(-90)).allowsHitTesting(false)
-            }
-        }
         .scaleEffect(reduceMotion ? 1 : 1 + pulse * 0.045)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(names[index]), app \(slot + 1): \(path.isEmpty ? "Empty slot" : title)")
