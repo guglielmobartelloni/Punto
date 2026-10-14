@@ -21,6 +21,7 @@
 @property NSPanel *launcherPanel;
 @property double launcherHideTime;
 @property double launcherLaunchTime;
+@property double launcherOpenedTime;
 @property NSString *pendingLauncherPath;
 @property NSStatusItem *item;
 @property NSWindow *window;
@@ -107,7 +108,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     for(int i=0;i<4;i++)[directions addObject:[self launcherApps:i]];
     return @{@"connected":@(input_connected()),@"enabled":@(input_enabled()),@"trusted":@(AXIsProcessTrusted()),@"speed":@(self.speed),@"deadzone":@(self.deadzone),@"scrollSpeed":@(self.scrollSpeed),@"buttons":rows,
              @"uiNavigation":@(self.navigationMode),@"navigationStatus":self.uiNavigation.status?:@"Press a direction to select a control.",
-             @"launcherApps":directions,@"launcherVisible":@(_launcher.visible),@"launcherDirection":@(_launcher.direction),@"launcherSlot":@(_launcher.slot)};
+             @"launcherApps":directions,@"launcherVisible":@(_launcher.visible),@"launcherDirection":@(_launcher.direction),@"launcherSlot":@(_launcher.slot),@"launcherLaunchTime":@(self.launcherLaunchTime),@"launcherOpenedTime":@(self.launcherOpenedTime)};
 }
 - (void)setMouseSpeed:(double)speed deadzone:(double)deadzone {
     self.speed=MAX(200,MIN(2600,speed));self.deadzone=MAX(0.03,MIN(0.4,deadzone));
@@ -237,12 +238,12 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     if(!self.launcherPanel)self.launcherPanel=[PadMacUI makeLauncherWithController:self];
     [self.launcherPanel center];[self.launcherPanel orderFrontRegardless];
     double now=NSProcessInfo.processInfo.systemUptime;
-    self.launcherHideTime=now+1.2;
+    self.launcherHideTime=now+1.2;self.launcherOpenedTime=0;
     self.pendingLauncherPath=[self launcherApps:_launcher.direction][_launcher.slot];
     self.launcherLaunchTime=self.pendingLauncherPath.length?now+0.5:0;
 }
 - (void)hideLauncher {
-    self.launcherHideTime=0;self.launcherLaunchTime=0;self.pendingLauncherPath=nil;launcher_reset(&_launcher);[self.launcherPanel orderOut:nil];
+    self.launcherHideTime=0;self.launcherLaunchTime=0;self.launcherOpenedTime=0;self.pendingLauncherPath=nil;launcher_reset(&_launcher);[self.launcherPanel orderOut:nil];
     self.launcherPanel.contentView=nil;self.launcherPanel=nil;input_suppress_pointer(false);
 }
 - (void)updateLauncherAtTime:(double)now trusted:(BOOL)trusted {
@@ -250,7 +251,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     if(!_launcher.visible||self.launcherLaunchTime<=0||now<self.launcherLaunchTime)return;
     NSString *path=self.pendingLauncherPath;
     self.launcherLaunchTime=0;self.pendingLauncherPath=nil;
-    if(path.length)[self launchApplication:path];
+    if(path.length){self.launcherOpenedTime=now;[self launchApplication:path];}
 }
 - (void)launchApplication:(NSString *)path {
     if(!path.length)return;

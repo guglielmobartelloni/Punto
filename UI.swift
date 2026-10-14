@@ -76,6 +76,8 @@ final class SettingsModel: ObservableObject {
     @Published var launcherVisible = false
     @Published var launcherDirection = -1
     @Published var launcherSlot = -1
+    @Published var launcherLaunchTime = 0.0
+    @Published var launcherOpenedTime = 0.0
     private var lastSnapshot: NSDictionary?
     private var timer: Timer?
     init(controller: PadMacUIController, pollInterval: Double = 0.15) {
@@ -105,6 +107,8 @@ final class SettingsModel: ObservableObject {
         launcherVisible = raw["launcherVisible"] as? Bool ?? false
         launcherDirection = raw["launcherDirection"] as? Int ?? -1
         launcherSlot = raw["launcherSlot"] as? Int ?? -1
+        launcherLaunchTime = raw["launcherLaunchTime"] as? Double ?? 0
+        launcherOpenedTime = raw["launcherOpenedTime"] as? Double ?? 0
         launcherApps = (0..<4).map { direction in
             let stored = raw["launcherApps"] as? [[String]] ?? []
             return (0..<2).map { slot in direction < stored.count && slot < stored[direction].count ? stored[direction][slot] : "" }

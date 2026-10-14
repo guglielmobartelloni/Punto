@@ -33,6 +33,7 @@ int main(void){@autoreleasepool{
     assert([[delegate settingsSnapshot][@"launcherVisible"] boolValue]);
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
     assert(!delegate.launchedPath&&[delegate.pendingLauncherPath isEqual:up[0]]);
+    assert(delegate.launcherOpenedTime==0&&[[delegate settingsSnapshot][@"launcherLaunchTime"] doubleValue]>0);
     double firstDeadline=delegate.launcherLaunchTime;
     [delegate updateLauncherAtTime:firstDeadline-0.01 trusted:YES];assert(delegate.launchCount==0);
     assert(application.activationPolicy==NSApplicationActivationPolicyAccessory);
@@ -48,8 +49,9 @@ int main(void){@autoreleasepool{
     [delegate updateLauncherAtTime:firstDeadline trusted:YES];assert(delegate.launchCount==0);
     [delegate updateLauncherAtTime:delegate.launcherLaunchTime trusted:YES];
     assert([delegate.launchedPath isEqual:up[1]]&&delegate.launchCount==1);
-    [delegate updateLauncherAtTime:firstDeadline+1 trusted:YES];assert(delegate.launchCount==1);
-    [delegate handleButton:18 pressed:YES];
+    double openedTime=delegate.launcherOpenedTime;assert(openedTime>0&&delegate.launcherLaunchTime==0);
+    [delegate updateLauncherAtTime:firstDeadline+1 trusted:YES];assert(delegate.launchCount==1&&delegate.launcherOpenedTime==openedTime);
+    [delegate handleButton:18 pressed:YES];assert(delegate.launcherOpenedTime==0);
     assert([[delegate settingsSnapshot][@"launcherDirection"] intValue]==3);
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
     assert([delegate handleButton:7 pressed:YES]); // R2 is consumed while navigating.
@@ -63,6 +65,7 @@ int main(void){@autoreleasepool{
     [delegate handleButton:2 pressed:YES];
     assert(![[delegate settingsSnapshot][@"launcherVisible"] boolValue]);
     assert(!delegate.launcherPanel.isVisible&&input_enabled());
+    assert(delegate.launcherOpenedTime==0&&delegate.launcherLaunchTime==0);
     [delegate updateLauncherAtTime:firstDeadline+5 trusted:YES];
     assert([delegate.launchedPath isEqualToString:beforeCancel]&&delegate.launchCount==1); // Circle cancels the pending app.
     [delegate handleButton:15 pressed:YES];[delegate handleButton:15 pressed:YES];
@@ -89,7 +92,16 @@ int main(void){@autoreleasepool{
     assert([bitmap colorAtX:0 y:0].alphaComponent<0.01);
     NSData *png=[bitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
     assert([png writeToFile:@"build/ui-launcher.png" atomically:YES]);
+    // Capture the real-time pulse using an intercepted launch, never a real app.
+    delegate.launcherLaunchTime=NSProcessInfo.processInfo.systemUptime;
+    [delegate updateLauncherAtTime:delegate.launcherLaunchTime trusted:YES];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.14]];
+    [view layoutSubtreeIfNeeded];
+    NSBitmapImageRep *pulseBitmap=[view bitmapImageRepForCachingDisplayInRect:view.bounds];
+    [view cacheDisplayInRect:view.bounds toBitmapImageRep:pulseBitmap];
+    NSData *pulsePNG=[pulseBitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+    assert([pulsePNG writeToFile:@"build/ui-launcher-pulse.png" atomically:YES]);
     [delegate hideLauncher];input_stop();input_button_handler(NULL);currentApp=nil;
     [defaults setVolatileDomain:original?:@{} forName:NSArgumentDomain];
-    puts("PASS: delayed latest-selection launch, deadline reset, one-shot, cancel/pause/permission/mode-change safety, compact tiles-only layout, no focus or Dock activation");
+    puts("PASS: delayed latest-selection launch, deadline reset, one-shot launch/pulse timestamps, cancellation feedback reset, cancel/pause/permission/mode-change safety, compact tiles-only layout, no focus or Dock activation");
 }return 0;}
