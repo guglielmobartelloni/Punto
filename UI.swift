@@ -322,7 +322,7 @@ private struct SettingsView: View {
             Divider()
             HStack(spacing: 8) {
                 Image(systemName: "info.circle").foregroundColor(.secondary)
-                Text("D-pad → Launcher / Navigation · Touchpad click → switch mode · Options → enable / pause")
+                Text("D-pad → Launcher / Navigation · Select / Create → switch mode · Options → enable / pause")
                     .font(.system(size: 10)).foregroundColor(.secondary)
                 Spacer(minLength: 0)
                 Button { showHelp.toggle() } label: { Image(systemName: "questionmark.circle").foregroundColor(.secondary) }.buttonStyle(.plain)
@@ -345,7 +345,7 @@ private struct SettingsView: View {
         }
     }
     @ViewBuilder private func buttonRow(_ setting: ButtonSetting) -> some View {
-        if setting.id == 5 || setting.id == 13 || (model.uiNavigationEnabled && (setting.id == 1 || setting.id == 2)) {
+        if setting.id == 5 || setting.id == 8 || (model.uiNavigationEnabled && (setting.id == 1 || setting.id == 2)) {
             HStack(spacing: 12) {
                 HStack(spacing: 9) {
                     Text(setting.glyph).font(.system(size: 11, weight: .medium)).foregroundColor(.secondary)
@@ -353,7 +353,7 @@ private struct SettingsView: View {
                     Text(setting.name).font(.system(size: 11, weight: .medium))
                 }.frame(width: 180, alignment: .leading)
                 Label(setting.primary, systemImage: setting.id == 5 ? "arrow.up.arrow.down" : setting.id == 2 ? "arrow.uturn.backward" : "viewfinder").font(.system(size: 11)).frame(maxWidth: .infinity, alignment: .leading)
-                Text(setting.id == 5 ? "Hold R1" : setting.id == 13 ? "Reserved" : "Navigation mode").font(.system(size: 11)).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .leading)
+                Text(setting.id == 5 ? "Hold R1" : setting.id == 8 ? "Reserved" : "Navigation mode").font(.system(size: 11)).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .leading)
             }.padding(.horizontal, 14).padding(.vertical, 11)
         } else {
         HStack(spacing: 12) {
@@ -441,7 +441,7 @@ private struct SettingsView: View {
     }
     private var navigationSettings: some View {
         VStack(alignment: .leading, spacing: 16) {
-            heading("D-pad behavior", detail: "Click the touchpad to switch modes while controller input is enabled.")
+            heading("D-pad behavior", detail: "Press Select / Create to switch modes while controller input is enabled.")
             VStack(alignment: .leading, spacing: 12) {
                 Picker("Mode", selection: Binding(get: { model.uiNavigationEnabled }, set: { model.controller.setUINavigationEnabled($0); model.refresh() })) {
                     Text("App launcher").tag(false)
@@ -461,7 +461,7 @@ private struct SettingsView: View {
             heading("Compatibility", detail: "Experimental: apps must expose their controls through Accessibility.")
             Text("Only visible, enabled controls in the active window, sheet, or focused menu are considered. Custom canvases and some web content may not expose enough information. The right stick, touchpad, and triggers remain available as a mouse fallback. Text entry and detailed slider editing still require the keyboard or mouse.")
                 .font(.system(size: 12)).foregroundColor(.secondary)
-            Text("Launcher assignments and existing shortcuts are preserved. ✕ and ○ use navigation actions only in this mode; touchpad click is reserved for switching modes. Pausing or disconnecting clears the selection.")
+            Text("Launcher assignments and existing shortcuts are preserved. ✕ and ○ use navigation actions only in this mode; Select / Create is reserved for switching modes. Pausing or disconnecting clears the selection.")
                 .font(.system(size: 11)).foregroundColor(.secondary)
         }
     }

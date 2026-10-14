@@ -37,7 +37,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 - (NSString *)pathKey:(NSInteger)index {return [NSString stringWithFormat:@"app%ld",(long)index];}
 - (NSString *)shortcutKey:(NSInteger)index {return [NSString stringWithFormat:@"shortcut%ld",(long)index];}
 - (NSString *)holdKey:(NSInteger)index {return [NSString stringWithFormat:@"holdShortcut%ld",(long)index];}
-- (BOOL)validButton:(NSInteger)index {return index>=0&&index<19&&index!=9&&index!=5&&index!=13;}
+- (BOOL)validButton:(NSInteger)index {return index>=0&&index<19&&index!=9&&index!=5&&index!=8;}
 - (void)applicationDidFinishLaunching:(NSNotification *)note {
     (void)note;currentApp=self;
     NSUserDefaults *d=NSUserDefaults.standardUserDefaults;PadMacMigrateShortcuts(d);
@@ -76,7 +76,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 }
 - (NSDictionary *)settingsSnapshot {
     NSUserDefaults *d=NSUserDefaults.standardUserDefaults;
-    NSArray *names=@[@"Square",@"Cross",@"Circle",@"Triangle",@"Left bumper · L1",@"Right bumper · R1",@"Left trigger · L2",@"Right trigger · R2",@"Create",@"Options",@"Left stick · L3",@"Right stick · R3",@"PS button",@"Touchpad click",@"Mute",@"D-pad up",@"D-pad right",@"D-pad down",@"D-pad left"];
+    NSArray *names=@[@"Square",@"Cross",@"Circle",@"Triangle",@"Left bumper · L1",@"Right bumper · R1",@"Left trigger · L2",@"Right trigger · R2",@"Select / Create",@"Options",@"Left stick · L3",@"Right stick · R3",@"PS button",@"Touchpad click",@"Mute",@"D-pad up",@"D-pad right",@"D-pad down",@"D-pad left"];
     NSArray *glyphs=@[@"□",@"✕",@"○",@"△",@"L1",@"R1",@"L2",@"R2",@"≡",@"…",@"L3",@"R3",@"PS",@"▭",@"◌",@"↑",@"→",@"↓",@"←"];
     NSMutableArray *rows=[NSMutableArray new];
     for(int i=0;i<19;i++){
@@ -91,11 +91,11 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
         if(action==12)primary=PadMacShortcutLabel(shortcut)?:@"Record shortcut";
         if(action==11)primary=path.length?[NSFileManager.defaultManager displayNameAtPath:path]:@"Choose application";
         if(i==5){action=13;primary=@"Right stick → scroll";}
-        if(i==13){action=14;primary=@"Toggle UI navigation";}
+        if(i==8){action=14;primary=@"Toggle UI navigation";}
         if(self.navigationMode&&i==1){action=15;primary=@"Activate selection";}
         if(self.navigationMode&&i==2){action=16;primary=@"Back / Escape";}
         NSMutableDictionary *row=[@{@"id":@(i),@"name":names[i],@"glyph":glyphs[i],@"group":group,@"action":@(action),@"primary":primary} mutableCopy];
-        if(i!=5&&i!=13&&!(self.navigationMode&&(i==1||i==2))&&hold[@"label"])row[@"hold"]=PadMacShortcutLabel(hold);
+        if(i!=5&&i!=8&&!(self.navigationMode&&(i==1||i==2))&&hold[@"label"])row[@"hold"]=PadMacShortcutLabel(hold);
         if(action==11&&path.length)row[@"appPath"]=path;
         [rows addObject:row];
     }
@@ -150,7 +150,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 }
 - (BOOL)handleButton:(int)index pressed:(BOOL)pressed {
     if(index<0){longpress_cancel(hold_event);[self hideLauncher];self.uiNavigation.active=NO;return YES;}
-    if(index==13){if(pressed)[self setUINavigationEnabled:!self.navigationMode];return YES;}
+    if(index==8){if(pressed)[self setUINavigationEnabled:!self.navigationMode];return YES;}
     if(self.navigationMode&&(index>=15||index==1||index==2)){
         self.uiNavigation.active=input_enabled()&&AXIsProcessTrusted();
         if(pressed){

@@ -70,7 +70,7 @@ Adjust cursor speed, stick deadzone, and scroll sensitivity. Scroll speed is ind
 
 ### Navigate apps like a game menu
 
-Choose **Navigation → UI navigation**, or click the controller’s touchpad while input is enabled. The D-pad moves a coral selection border between accessible controls; **✕ activates** and **○ goes back**. Click the touchpad again to restore the launcher.
+Choose **Navigation → UI navigation**, or press **Select / Create** (the small button to the left of the touchpad) while input is enabled. The D-pad moves a coral selection border between accessible controls; **✕ activates** and **○ goes back**. Press Select / Create again to restore the launcher.
 
 This feature is **experimental** and uses the app’s native macOS Accessibility elements—not simulated coordinate clicks. Custom canvases and some web content may not expose usable controls. Mouse control remains available as a fallback; text entry still needs a keyboard.
 
@@ -90,7 +90,7 @@ Choose up to **eight applications**, arranged across up, right, down, and left.
 | :--- | :--- |
 | Right stick | Move the cursor |
 | Touchpad | Move the cursor with one finger |
-| **Touchpad click** | Switch between the launcher and UI navigation |
+| **Select / Create** | Switch between the launcher and UI navigation |
 | **R1 + right stick** | Scroll vertically and horizontally |
 | **R2** | Left click; hold to drag |
 | **L2** | Right click; hold to drag |
@@ -133,7 +133,7 @@ Punto always starts paused. Closing settings leaves it running in the menu bar. 
 
 - This is an **in-development** build, not yet distributed with Developer ID signing and notarization.
 - It supports **one controller at a time** and the standard DualSense, not the DualSense Edge.
-- R1, Options, the D-pad, and touchpad click have reserved roles. In UI navigation, ✕ and ○ temporarily replace their normal shortcuts. Saved assignments are preserved.
+- R1, Options, the D-pad, and Select / Create have reserved roles. Touchpad click is customizable. In UI navigation, ✕ and ○ temporarily replace their normal shortcuts. Saved assignments are preserved.
 - Some macOS-reserved combinations may not be recordable or reproducible.
 - The bundle and executable are named **Punto.app** and **Punto**. The original bundle identifier and signing identity are retained to preserve preferences and signing continuity.
 - If upgrading from the old bundle path, macOS may require you to add Punto again under Accessibility.

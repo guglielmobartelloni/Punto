@@ -105,7 +105,7 @@ Apps previously assigned to D-pad buttons are migrated into the first slot. Prev
 
 ### UI navigation (experimental)
 
-Select **Navigation → UI navigation**, or press **touchpad click** while controller input is enabled. Mode selection persists in `uiNavigation`; controller input still starts paused.
+Select **Navigation → UI navigation**, or press **Select / Create** (the small button to the left of the touchpad) while controller input is enabled. Mode selection persists in `uiNavigation`; controller input still starts paused.
 
 - The D-pad selects accessible controls in the frontmost app’s focused window, modal sheet, or focused menu. The first press selects the focused control if available, otherwise the first discovered control.
 - Subsequent presses rank element centers in a directional cone, favoring the same row or column. At a boundary the selection remains in place; it does not wrap.
@@ -116,7 +116,7 @@ Select **Navigation → UI navigation**, or press **touchpad click** while contr
 - Tree discovery runs on a serial background queue, capped at 2,000 elements and a 300 ms traversal budget, with 25 ms per-attribute messaging timeouts. Native actions have a separate 500 ms timeout. A single remote call may slightly exceed the traversal budget.
 - A lighter 250 ms poll tracks the selection. Activation rescans and revalidates the element, app, and window; stale elements are rejected rather than blindly clicked. Selection is retained if the control remains visible after activation. Some providers return an error even after dispatching an action; ambiguous results are shown as “Action requested” and are never retried automatically.
 - An eight-command queue preserves rapid presses. App/window changes discard queued commands. Generation checks invalidate pending actions on pause, disconnect, permission loss, or mode changes.
-- Switching modes releases held mouse buttons/keys and cancels long presses. Existing launcher, touchpad, ✕, and ○ assignments remain stored. Touchpad click is reserved; ✕ and ○ regain normal assignments outside navigation mode.
+- Switching modes releases held mouse buttons/keys and cancels long presses. Existing launcher, Select/Create, ✕, and ○ assignments remain stored. Select/Create is reserved; touchpad click is customizable; ✕ and ○ regain normal assignments outside navigation mode.
 - The right stick, touchpad movement, R1 scrolling, and trigger clicks remain available as a mouse fallback.
 
 This is not universal semantic navigation: app Accessibility providers determine coverage, grouping, visibility, and action support. Custom canvases and some browser content are incomplete. Text entry, complex slider editing, virtualized lists, and automatic scrolling to off-screen controls are not implemented. No window content or discovered control labels are logged or persisted by the runtime.
@@ -172,7 +172,7 @@ The fixture inspects and acts **only on its own window**, even if another app be
 - [ ] Tap/hold behavior and pausing before/after the threshold.
 - [ ] Automatic launcher opening, second slot, direction changes, and timeout.
 - [ ] No normal ✕/○ shortcut while the overlay is visible.
-- [ ] Touchpad click switches launcher/navigation without running its saved assignment.
+- [ ] Select/Create switches launcher/navigation without running its saved assignment; touchpad click runs its configured action.
 - [ ] Navigation selects controls spatially and activates them in the intended target apps.
 - [ ] The border does not take focus, intercept clicks, or appear in the Dock.
 - [ ] App/window changes, pause, disconnect, and permission loss clear the selection.
