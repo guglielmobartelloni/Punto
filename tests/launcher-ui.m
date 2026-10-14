@@ -53,6 +53,12 @@ int main(void){@autoreleasepool{
     assert([[delegate settingsSnapshot][@"launcherDirection"] intValue]==3);
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
     assert([delegate handleButton:7 pressed:YES]); // R2 is consumed while navigating.
+    [delegate handleButton:18 pressed:YES];assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==1);
+    [delegate handleButton:16 pressed:YES];
+    assert([[delegate settingsSnapshot][@"launcherDirection"] intValue]==3&&[[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
+    assert([delegate.pendingLauncherPath isEqual:left[0]]&&delegate.launchCount==1);
+    [delegate handleButton:16 pressed:YES];
+    assert([[delegate settingsSnapshot][@"launcherDirection"] intValue]==1&&[delegate.pendingLauncherPath isEqual:right[0]]);
     NSString *beforeCancel=delegate.launchedPath;
     [delegate handleButton:2 pressed:YES];
     assert(![[delegate settingsSnapshot][@"launcherVisible"] boolValue]);

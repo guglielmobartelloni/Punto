@@ -15,5 +15,16 @@ int main(void){
     launcher_select(&state,3,available);assert(state.slot==0);
     launcher_select(&state,-1,available);launcher_select(&state,4,available);assert(state.direction==3);
     launcher_reset(&state);launcher_select(&state,0,available);assert(state.slot==0);
-    puts("PASS: directional open, two-app cycling, direction switch, sparse slots, reset");return 0;
+    bool full[4][2]={{true,true},{true,true},{true,true},{true,true}};
+    for(int direction=0;direction<4;direction++){
+        launcher_reset(&state);launcher_select(&state,direction,full);launcher_select(&state,direction,full);
+        int opposite=(direction+2)%4;
+        launcher_select(&state,opposite,full);assert(state.direction==direction&&state.slot==0);
+        launcher_select(&state,opposite,full);assert(state.direction==opposite&&state.slot==0);
+    }
+    launcher_reset(&state);launcher_select(&state,2,available);assert(state.slot==1);
+    launcher_select(&state,0,available);assert(state.direction==0&&state.slot==0); // Skip an empty inner slot.
+    launcher_reset(&state);launcher_select(&state,0,full);launcher_select(&state,0,full);
+    launcher_select(&state,1,full);assert(state.direction==1&&state.slot==0); // Perpendicular input switches arms.
+    puts("PASS: directional selection, cycling, opposite-direction inward step, arm crossing, sparse slots, reset");return 0;
 }
