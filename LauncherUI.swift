@@ -37,7 +37,8 @@ struct PuntoLauncherView: View {
 
     private func tiles(_ index: Int) -> some View {
         Group {
-            ForEach(0..<2, id: \.self) { slot in
+            // Slot 1 is nearest the center; slot 2 extends outward.
+            ForEach(index == 0 || index == 3 ? [1, 0] : [0, 1], id: \.self) { slot in
                 let path = model.launcherApps[index][slot]
                 let selected = model.launcherDirection == index && model.launcherSlot == slot
                 let title = path.isEmpty ? "—" : FileManager.default.displayName(atPath: path)
