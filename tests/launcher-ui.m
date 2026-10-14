@@ -106,6 +106,13 @@ int main(void){@autoreleasepool{
     [view cacheDisplayInRect:view.bounds toBitmapImageRep:pulseBitmap];
     NSData *pulsePNG=[pulseBitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
     assert([pulsePNG writeToFile:@"build/ui-launcher-pulse.png" atomically:YES]);
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.32]];
+    [view layoutSubtreeIfNeeded];
+    NSBitmapImageRep *settledBitmap=[view bitmapImageRepForCachingDisplayInRect:view.bounds];
+    [view cacheDisplayInRect:view.bounds toBitmapImageRep:settledBitmap];
+    NSData *settledPNG=[settledBitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
+    assert(![pulsePNG isEqual:settledPNG]); // Pulse must advance without any selection change.
+    assert([settledPNG writeToFile:@"build/ui-launcher-settled.png" atomically:YES]);
     [delegate hideLauncher];input_stop();input_button_handler(NULL);currentApp=nil;
     [defaults setVolatileDomain:original?:@{} forName:NSArgumentDomain];
     puts("PASS: delayed latest-selection launch, deadline reset, one-shot launch/pulse timestamps, cancellation feedback reset, cancel/pause/permission/mode-change safety, compact tiles-only layout, no focus or Dock activation");

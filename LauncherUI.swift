@@ -9,15 +9,17 @@ struct PuntoLauncherView: View {
 
     var body: some View {
         // Keep one stable animation clock; changing selection never replaces tile hosts.
-        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !model.launcherVisible)) { _ in
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !model.launcherVisible)) { context in
+            // Pass frame time through ForEach: an unchanged selection must still redraw its pulse.
+            let now = ProcessInfo.processInfo.systemUptime + context.date.timeIntervalSinceNow
             VStack(spacing: 6) {
-                direction(0)
+                direction(0, now: now)
                 HStack(spacing: 0) {
-                    direction(3)
+                    direction(3, now: now)
                     Color.clear.frame(width: 76, height: 64).accessibilityHidden(true)
-                    direction(1)
+                    direction(1, now: now)
                 }
-                direction(2)
+                direction(2, now: now)
             }
             .padding(12)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -25,20 +27,20 @@ struct PuntoLauncherView: View {
         }
     }
 
-    @ViewBuilder private func direction(_ index: Int) -> some View {
+    @ViewBuilder private func direction(_ index: Int, now: Double) -> some View {
         if index == 0 || index == 2 {
-            VStack(spacing: 6) { tiles(index) }
+            VStack(spacing: 6) { tiles(index, now: now) }
         } else {
-            HStack(spacing: 6) { tiles(index) }
+            HStack(spacing: 6) { tiles(index, now: now) }
         }
     }
 
-    private func tiles(_ index: Int) -> some View {
+    private func tiles(_ index: Int, now: Double) -> some View {
         Group {
             // Slot 1 is nearest the center; slot 2 extends outward.
             ForEach(index == 0 || index == 3 ? [1, 0] : [0, 1], id: \.self) { slot in
                 let selected = model.launcherDirection == index && model.launcherSlot == slot
-                tile(index, slot: slot, selected: selected, now: ProcessInfo.processInfo.systemUptime)
+                tile(index, slot: slot, selected: selected, now: now)
             }
         }
     }
