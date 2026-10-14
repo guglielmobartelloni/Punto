@@ -407,37 +407,52 @@ private struct SettingsView: View {
                 Label("Opens after 0.5 s · no confirmation", systemImage: "bolt.fill")
                 Label("○ cancels the pending launch", systemImage: "xmark.circle")
             }.font(.system(size: 11)).foregroundColor(.secondary)
-            ForEach(0..<4, id: \.self) { direction in
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 9) {
-                        Text(["↑", "→", "↓", "←"][direction]).font(.system(size: 21, weight: .medium)).foregroundColor(accent)
-                        Text(["Up", "Right", "Down", "Left"][direction]).font(.system(size: 13, weight: .medium))
-                        Spacer()
-                        Text("UP TO 2 APPS").font(.system(size: 9, weight: .medium)).foregroundColor(.secondary)
-                    }
-                    HStack(spacing: 12) {
-                        ForEach(0..<2, id: \.self) { slot in
-                            let path = model.launcherApps[direction][slot]
-                            Menu {
-                                Button(path.isEmpty ? "Choose application…" : "Change application…") { model.configureLauncher(direction, slot: slot) }
-                                if !path.isEmpty { Divider(); Button("Remove application") { model.clearLauncher(direction, slot: slot) } }
-                            } label: {
-                                HStack(spacing: 9) {
-                                    if !path.isEmpty { Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().frame(width: 20, height: 20) }
-                                    else { Image(systemName: "plus.app").font(.system(size: 17)).foregroundColor(.secondary) }
-                                    Text(path.isEmpty ? "App \(slot + 1) · Choose application…" : "\(slot + 1) · \(FileManager.default.displayName(atPath: path))")
-                                        .font(.system(size: 11)).lineLimit(1)
-                                    Spacer(minLength: 0)
-                                }.padding(11)
-                            }.menuStyle(.borderlessButton).tint(path.isEmpty ? .secondary : .primary).frame(height: 39)
-                                .background(Color.primary.opacity(0.035)).cornerRadius(6).frame(maxWidth: .infinity)
-                        }
-                    }
-                }.padding(18).card(radius: 8)
-            }
+            VStack(spacing: 12) {
+                launcherDirectionSettings(0)
+                HStack(spacing: 0) {
+                    launcherDirectionSettings(3)
+                    Color.clear.frame(width: 76, height: 64).accessibilityHidden(true)
+                    launcherDirectionSettings(1)
+                }
+                launcherDirectionSettings(2)
+            }.padding(12).frame(maxWidth: .infinity).card(radius: 8)
+            Text("App 1 is nearest the center; App 2 is further out. Choose, change, or remove an app from its tile.")
+                .font(.system(size: 11)).foregroundColor(.secondary)
             Text("Controller input must be enabled. The overlay disappears after 1.2 seconds. The selected app opens after 0.5 seconds; ✕ and ○ do not run their normal shortcuts while it is visible. Previous D-pad assignments remain stored; previously assigned apps are migrated to slot 1.")
                 .font(.system(size: 10)).foregroundColor(.secondary).lineSpacing(3)
         }
+    }
+    private func launcherDirectionSettings(_ direction: Int) -> some View {
+        VStack(spacing: 6) {
+            Label(["Up", "Right", "Down", "Left"][direction], systemImage: ["arrow.up", "arrow.right", "arrow.down", "arrow.left"][direction])
+                .font(.system(size: 11, weight: .medium)).foregroundColor(accent)
+            if direction == 0 || direction == 2 {
+                VStack(spacing: 6) {
+                    ForEach(direction == 0 ? [1, 0] : [0, 1], id: \.self) { launcherAppTile(direction, slot: $0) }
+                }
+            } else {
+                HStack(spacing: 6) {
+                    ForEach(direction == 3 ? [1, 0] : [0, 1], id: \.self) { launcherAppTile(direction, slot: $0) }
+                }
+            }
+        }
+    }
+    private func launcherAppTile(_ direction: Int, slot: Int) -> some View {
+        let path = model.launcherApps[direction][slot]
+        let title = path.isEmpty ? "Choose app…" : FileManager.default.displayName(atPath: path)
+        return Menu {
+            Button(path.isEmpty ? "Choose application…" : "Change application…") { model.configureLauncher(direction, slot: slot) }
+            if !path.isEmpty { Divider(); Button("Remove application") { model.clearLauncher(direction, slot: slot) } }
+        } label: {
+            HStack(spacing: 7) {
+                if path.isEmpty { Image(systemName: "plus.app").font(.system(size: 18)).foregroundColor(.secondary).frame(width: 22) }
+                else { Image(nsImage: NSWorkspace.shared.icon(forFile: path)).resizable().frame(width: 22, height: 22) }
+                Text("\(slot + 1) · \(title)").font(.system(size: 11, weight: .medium)).lineLimit(1)
+                Spacer(minLength: 0)
+            }.padding(.horizontal, 8)
+        }.menuStyle(.borderlessButton).tint(path.isEmpty ? .secondary : .primary)
+            .frame(width: 128, height: 44).background(Color.primary.opacity(0.035)).cornerRadius(6)
+            .help("\(["Up", "Right", "Down", "Left"][direction]) · App \(slot + 1): \(title)")
     }
     private var navigationSettings: some View {
         VStack(alignment: .leading, spacing: 16) {

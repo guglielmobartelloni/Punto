@@ -93,6 +93,8 @@ When upgrading from the old bundle, replace the old Dock shortcut with `Punto.ap
 
 ### Launcher
 
+Configuration mirrors the overlay’s directional cross: Up/Down slots stack vertically, Left/Right slots sit horizontally, and slot 1 is always nearest the empty center. Each tile retains its choose/change/remove menu and displays its slot number.
+
 - Two slots per direction, saved as application paths.
 - A D-pad direction or left-stick tilt selects the first available app. It opens **500 ms after the last selection**, without confirmation.
 - Pressing the same direction again while the overlay is visible cycles between occupied slots.

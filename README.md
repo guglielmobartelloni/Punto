@@ -78,7 +78,7 @@ This feature is **experimental** and uses the app’s native macOS Accessibility
 
 ### Your apps in four directions
 
-Choose up to **eight applications**, arranged across up, right, down, and left.
+Choose up to **eight applications** in a configuration that mirrors the launcher’s directional cross. App 1 is closest to the center; App 2 is further out.
 
 <img src="docs/screenshots/launcher-settings.png" width="960" alt="Directional launcher settings with two application slots per direction">
 
