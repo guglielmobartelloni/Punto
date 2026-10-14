@@ -27,8 +27,16 @@ struct PuntoLauncherView: View {
         .animation(.easeOut(duration: 0.12), value: model.launcherSlot)
     }
 
-    private func direction(_ index: Int) -> some View {
-        HStack(spacing: 6) {
+    @ViewBuilder private func direction(_ index: Int) -> some View {
+        if index == 0 || index == 2 {
+            VStack(spacing: 6) { tiles(index) }
+        } else {
+            HStack(spacing: 6) { tiles(index) }
+        }
+    }
+
+    private func tiles(_ index: Int) -> some View {
+        Group {
             ForEach(0..<2, id: \.self) { slot in
                 let path = model.launcherApps[index][slot]
                 let selected = model.launcherDirection == index && model.launcherSlot == slot

@@ -148,7 +148,7 @@ final class SettingsModel: ObservableObject {
     @objc static func makeLauncher(controller: PadMacUIController) -> NSPanel {
         let model = SettingsModel(controller: controller, pollInterval: 0.03)
         let screen = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
-        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: min(304, screen.width - 48), height: min(228, screen.height - 48)),
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: min(304, screen.width - 48), height: min(368, screen.height - 48)),
                             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         panel.isOpaque = false; panel.backgroundColor = .clear; panel.hasShadow = true
         panel.level = .floating; panel.hidesOnDeactivate = false; panel.isReleasedWhenClosed = false
