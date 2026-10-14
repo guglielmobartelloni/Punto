@@ -32,9 +32,10 @@ int main(void){@autoreleasepool{
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==0);
     assert([delegate.launchedPath isEqualToString:up[0]]); // Immediate automatic launch.
     assert(application.activationPolicy==NSApplicationActivationPolicyAccessory);
+    assert(!delegate.launcherPanel.isKeyWindow);
     assert(delegate.launcherPanel.isVisible); // Overlay alone must not add a Dock icon.
-    assert(delegate.launcherPanel.contentView.bounds.size.width<=560);
-    assert(delegate.launcherPanel.contentView.bounds.size.height<=400);
+    assert(delegate.launcherPanel.contentView.bounds.size.width<=304);
+    assert(delegate.launcherPanel.contentView.bounds.size.height<=228);
     assert([delegate handleButton:15 pressed:NO]);
     [delegate handleButton:15 pressed:YES];
     assert([[delegate settingsSnapshot][@"launcherSlot"] intValue]==1);
@@ -64,5 +65,5 @@ int main(void){@autoreleasepool{
     assert([png writeToFile:@"build/ui-launcher.png" atomically:YES]);
     [delegate hideLauncher];input_stop();input_button_handler(NULL);currentApp=nil;
     [defaults setVolatileDomain:original?:@{} forName:NSArgumentDomain];
-    puts("PASS: automatic directional launch, two-slot cycle, cancel, suspend cleanup, no Dock activation");
+    puts("PASS: automatic directional launch, two-slot cycle, cancel, suspend cleanup, compact tiles-only layout, no focus or Dock activation");
 }return 0;}
