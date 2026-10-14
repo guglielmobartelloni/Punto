@@ -7,12 +7,15 @@
 #import "keyboard.h"
 #import "longpress.h"
 #import "launcher.h"
+#import "UINavigation.h"
 #import "UIController.h"
 #import "build/PadMacUI-Swift.h"
 
 @interface App : NSObject <NSApplicationDelegate,NSWindowDelegate,PadMacUIController> {
     LauncherState _launcher;
 }
+@property PuntoUINavigation *uiNavigation;
+@property BOOL navigationMode;
 @property NSPanel *launcherPanel;
 @property double launcherHideTime;
 @property NSStatusItem *item;
@@ -34,12 +37,21 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 - (NSString *)pathKey:(NSInteger)index {return [NSString stringWithFormat:@"app%ld",(long)index];}
 - (NSString *)shortcutKey:(NSInteger)index {return [NSString stringWithFormat:@"shortcut%ld",(long)index];}
 - (NSString *)holdKey:(NSInteger)index {return [NSString stringWithFormat:@"holdShortcut%ld",(long)index];}
-- (BOOL)validButton:(NSInteger)index {return index>=0&&index<19&&index!=9&&index!=5;}
+- (BOOL)validButton:(NSInteger)index {return index>=0&&index<19&&index!=9&&index!=5&&index!=13;}
 - (void)applicationDidFinishLaunching:(NSNotification *)note {
     (void)note;currentApp=self;
     NSUserDefaults *d=NSUserDefaults.standardUserDefaults;PadMacMigrateShortcuts(d);
     [d registerDefaults:@{@"speed":@1100,@"zone":@0.12,@"scrollSpeed":@900}];
     launcher_reset(&_launcher);
+    self.navigationMode=[d boolForKey:@"uiNavigation"];
+    self.uiNavigation=[PuntoUINavigation new];
+    __weak App *weakSelf=self;
+    self.uiNavigation.backFallback=^{
+        App *app=weakSelf;
+        if(app.navigationMode&&input_enabled()&&AXIsProcessTrusted()){
+            keyboard_hold(2,53,0,true);keyboard_hold(2,53,0,false);
+        }
+    };
     for(int direction=0;direction<4;direction++){
         NSString *key=[self launcherKey:direction];int button=15+direction;
         if(![d objectForKey:key]&&[d integerForKey:[self actionKey:button]]==11){
@@ -79,14 +91,18 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
         if(action==12)primary=PadMacShortcutLabel(shortcut)?:@"Record shortcut";
         if(action==11)primary=path.length?[NSFileManager.defaultManager displayNameAtPath:path]:@"Choose application";
         if(i==5){action=13;primary=@"Right stick → scroll";}
+        if(i==13){action=14;primary=@"Toggle UI navigation";}
+        if(self.navigationMode&&i==1){action=15;primary=@"Activate selection";}
+        if(self.navigationMode&&i==2){action=16;primary=@"Back / Escape";}
         NSMutableDictionary *row=[@{@"id":@(i),@"name":names[i],@"glyph":glyphs[i],@"group":group,@"action":@(action),@"primary":primary} mutableCopy];
-        if(i!=5&&hold[@"label"])row[@"hold"]=PadMacShortcutLabel(hold);
+        if(i!=5&&i!=13&&!(self.navigationMode&&(i==1||i==2))&&hold[@"label"])row[@"hold"]=PadMacShortcutLabel(hold);
         if(action==11&&path.length)row[@"appPath"]=path;
         [rows addObject:row];
     }
     NSMutableArray *directions=[NSMutableArray new];
     for(int i=0;i<4;i++)[directions addObject:[self launcherApps:i]];
     return @{@"connected":@(input_connected()),@"enabled":@(input_enabled()),@"trusted":@(AXIsProcessTrusted()),@"speed":@(self.speed),@"deadzone":@(self.deadzone),@"scrollSpeed":@(self.scrollSpeed),@"buttons":rows,
+             @"uiNavigation":@(self.navigationMode),@"navigationStatus":self.uiNavigation.status?:@"Press a direction to select a control.",
              @"launcherApps":directions,@"launcherVisible":@(_launcher.visible),@"launcherDirection":@(_launcher.direction),@"launcherSlot":@(_launcher.slot)};
 }
 - (void)setMouseSpeed:(double)speed deadzone:(double)deadzone {
@@ -126,8 +142,24 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
     if(![self validButton:index])return;input_enable(false);
     [NSUserDefaults.standardUserDefaults removeObjectForKey:[self holdKey:index]];
 }
+- (void)saveNavigationMode {[NSUserDefaults.standardUserDefaults setBool:self.navigationMode forKey:@"uiNavigation"];}
+- (void)setUINavigationEnabled:(BOOL)enabled {
+    input_release_actions();[self hideLauncher];
+    self.navigationMode=enabled;[self saveNavigationMode];
+    self.uiNavigation.active=enabled&&input_enabled()&&AXIsProcessTrusted();
+}
 - (BOOL)handleButton:(int)index pressed:(BOOL)pressed {
-    if(index<0){longpress_cancel(hold_event);[self hideLauncher];return YES;}
+    if(index<0){longpress_cancel(hold_event);[self hideLauncher];self.uiNavigation.active=NO;return YES;}
+    if(index==13){if(pressed)[self setUINavigationEnabled:!self.navigationMode];return YES;}
+    if(self.navigationMode&&(index>=15||index==1||index==2)){
+        self.uiNavigation.active=input_enabled()&&AXIsProcessTrusted();
+        if(pressed){
+            if(index>=15&&index<=18)[self.uiNavigation move:index-15];
+            else if(index==1)[self.uiNavigation activateSelection];
+            else if(index==2)[self.uiNavigation goBack];
+        }
+        return YES;
+    }
     if(index>=15&&index<=18){if(pressed)[self selectLauncherDirection:index-15];return YES;}
     if(_launcher.visible){
         if(pressed&&index==2)[self hideLauncher];
@@ -216,9 +248,12 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 - (void)tick:(NSTimer *)timer {
     (void)timer;double now=NSProcessInfo.processInfo.systemUptime,dt=MIN(0.04,now-self.lastTime);self.lastTime=now;
     if(_launcher.visible&&self.launcherHideTime>0&&now>=self.launcherHideTime)[self hideLauncher];
-    if(input_enabled()&&!AXIsProcessTrusted())input_enable(false);
+    BOOL trusted=!input_enabled()||AXIsProcessTrusted();
+    if(input_enabled()&&!trusted)input_enable(false);
     if(input_enabled()&&!_launcher.visible)longpress_tick(now,hold_event);
     input_tick(dt,self.speed,self.deadzone);
+    self.uiNavigation.active=self.navigationMode&&input_enabled()&&trusted;
+    [self.uiNavigation poll];
 }
 - (void)toggleControl {
     if(input_enabled()){input_enable(false);return;}
@@ -239,7 +274,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 - (void)toggle:(id)sender {(void)sender;[self toggleControl];}
 - (void)show:(id)sender {
     (void)sender;
-    [self hideLauncher];
+    [self hideLauncher];self.uiNavigation.active=NO;
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
     if(self.window.isMiniaturized)[self.window deminiaturize:nil];
     [self.window makeKeyAndOrderFront:nil];
@@ -254,7 +289,7 @@ static void hold_event(int index,HoldEvent event){[currentApp holdEvent:index ev
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)application {
     (void)application;return NO;
 }
-- (void)applicationWillTerminate:(NSNotification *)note {(void)note;[self.timer invalidate];input_stop();input_button_handler(NULL);currentApp=nil;}
+- (void)applicationWillTerminate:(NSNotification *)note {(void)note;[self.timer invalidate];self.uiNavigation.active=NO;input_stop();input_button_handler(NULL);currentApp=nil;}
 // Optional local visual QA: captures only our own window content, not the desktop.
 - (void)savePreviewIfRequested {
     NSArray<NSString *> *arguments=NSProcessInfo.processInfo.arguments;

@@ -6,7 +6,7 @@
 
 <p align="center">
   Your Mac. Your controller.<br>
-  Mouse control, shortcuts, and an app launcher for the PS5 DualSense.
+  Mouse control, UI navigation, shortcuts, and an app launcher for the PS5 DualSense.
 </p>
 
 <p align="center">
@@ -35,6 +35,7 @@
 | **Push-to-talk** | Keep the shortcut pressed for as long as you hold the controller button. |
 | **Long press** | Assign a second shortcut to the same button. |
 | **Directional launcher** | Four directions, up to two apps per direction. Launch instantly. |
+| **UI navigation** | Select controls in the active app with the D-pad and activate them with ✕. No mouse aiming. |
 
 A **native SwiftUI interface**, dark/light/system themes, and automatically saved preferences. The app requires no server, account, or web service.
 
@@ -59,13 +60,21 @@ Recorded shortcuts, apps to bring to the foreground, and a separate assignment f
 </p>
 
 <details>
-<summary><strong>Mouse settings and launcher configuration</strong></summary>
+<summary><strong>Mouse settings, UI navigation, and launcher configuration</strong></summary>
 
 ### Mouse and scrolling
 
 Adjust cursor speed, stick deadzone, and scroll sensitivity. Scroll speed is independent of cursor speed.
 
 <img src="docs/screenshots/mouse.png" width="960" alt="Mouse settings with a dedicated scroll sensitivity slider">
+
+### Navigate apps like a game menu
+
+Choose **Navigation → UI navigation**, or click the controller’s touchpad while input is enabled. The D-pad moves a coral selection border between accessible controls; **✕ activates** and **○ goes back**. Click the touchpad again to restore the launcher.
+
+This feature is **experimental** and uses the app’s native macOS Accessibility elements—not simulated coordinate clicks. Custom canvases and some web content may not expose usable controls. Mouse control remains available as a fallback; text entry still needs a keyboard.
+
+<img src="docs/screenshots/navigation.png" width="960" alt="UI navigation settings with controller controls and Accessibility compatibility notes">
 
 ### Your apps in four directions
 
@@ -81,10 +90,12 @@ Choose up to **eight applications**, arranged across up, right, down, and left.
 | :--- | :--- |
 | Right stick | Move the cursor |
 | Touchpad | Move the cursor with one finger |
+| **Touchpad click** | Switch between the launcher and UI navigation |
 | **R1 + right stick** | Scroll vertically and horizontally |
 | **R2** | Left click; hold to drag |
 | **L2** | Right click; hold to drag |
-| **↑ → ↓ ←** | Open the app in that direction; press again for the second app |
+| **↑ → ↓ ←** | Launcher: open an app. UI navigation: select a control. |
+| **✕ / ○ in UI navigation** | Activate the selection / go back |
 | **○ while the overlay is visible** | Dismiss the visual feedback |
 | **Options** | Enable or pause controller input |
 | Other buttons | Custom shortcuts or application actions |
@@ -114,7 +125,7 @@ This repository is private. Cloning requires an authorized GitHub account.
 
 1. Connect the controller. For Bluetooth pairing, hold **PS + Create** until the light flashes, then pair it in macOS settings.
 2. In Punto, open **Permissions → Open Accessibility settings** and grant Accessibility permission. Also grant Input Monitoring if macOS requests it.
-3. Configure **Buttons**, **Launcher**, and **Mouse**, then click **Enable**.
+3. Configure **Buttons**, **Launcher**, **Navigation**, and **Mouse**, then click **Enable**.
 
 Punto always starts paused. Closing settings leaves it running in the menu bar. It appears in the Dock only while the configuration window is open.
 
@@ -122,7 +133,7 @@ Punto always starts paused. Closing settings leaves it running in the menu bar. 
 
 - This is an **in-development** build, not yet distributed with Developer ID signing and notarization.
 - It supports **one controller at a time** and the standard DualSense, not the DualSense Edge.
-- R1, Options, and the D-pad have reserved roles. Other buttons are customizable.
+- R1, Options, the D-pad, and touchpad click have reserved roles. In UI navigation, ✕ and ○ temporarily replace their normal shortcuts. Saved assignments are preserved.
 - Some macOS-reserved combinations may not be recordable or reproducible.
 - The bundle and executable are named **Punto.app** and **Punto**. The original bundle identifier and signing identity are retained to preserve preferences and signing continuity.
 - If upgrading from the old bundle path, macOS may require you to add Punto again under Accessibility.
@@ -133,8 +144,9 @@ Punto always starts paused. Closing settings leaves it running in the menu bar. 
 make test                 # Input, shortcuts, scrolling, and directional selection
 make test-dock            # Window and Dock lifecycle
 make test-launcher-ui     # Overlay routing and a preview with demo apps
+make test-navigation-ui   # UI navigation routing and safe mode switching
 ```
 
-The two UI tests require a macOS graphical session. They do not launch demo applications or change launcher assignments.
+The UI tests require a macOS graphical session. They do not launch demo applications or change saved assignments. An optional live Accessibility fixture test is described in the development guide.
 
 → [Architecture, local signing, and manual verification](docs/DEVELOPMENT.md)

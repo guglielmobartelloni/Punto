@@ -16,6 +16,8 @@ Run commands from the project root. The build uses Apple Command Line Tools; ful
 | `keyboard.c` | Held shortcuts and shared-key reference counts |
 | `longpress.c` | Tap versus long-press state machine |
 | `launcher.c` | Directional selection and two-slot cycling |
+| `navigation.c` | Geometric directional scoring, independent of Accessibility |
+| `UINavigation.m` | Asynchronous AX discovery, safe native actions, and non-activating selection overlay |
 | `ShortcutRecorder.m` | Shortcut recording and preference migration |
 | `scripts/generate-brand-icon.swift` | macOS icon generation |
 
@@ -101,6 +103,24 @@ When upgrading from the old bundle, replace the old Dock shortcut with `Punto.ap
 
 Apps previously assigned to D-pad buttons are migrated into the first slot. Previous D-pad and R1 shortcut/Hold assignments remain stored, but are not executed because these inputs now have reserved roles.
 
+### UI navigation (experimental)
+
+Select **Navigation → UI navigation**, or press **touchpad click** while controller input is enabled. Mode selection persists in `uiNavigation`; controller input still starts paused.
+
+- The D-pad selects accessible controls in the frontmost app’s focused window, modal sheet, or focused menu. The first press selects the focused control if available, otherwise the first discovered control.
+- Subsequent presses rank element centers in a directional cone, favoring the same row or column. At a boundary the selection remains in place; it does not wrap.
+- Disabled, hidden, off-screen, and out-of-viewport controls are excluded when the provider supplies the necessary information.
+- **✕** invokes `AXPress`, `AXConfirm`, or `AXPick`; editable fields use the settable `AXFocused` attribute. No coordinate-click fallback is used.
+- **○** requests `AXCancel`. If unsupported, Escape is emitted through the shared-key reference-counting engine.
+- The coral border is a non-activating, click-through panel. Mode and failure feedback use a short-lived, non-activating badge.
+- Tree discovery runs on a serial background queue, capped at 2,000 elements and a 300 ms traversal budget, with 25 ms per-attribute messaging timeouts. Native actions have a separate 500 ms timeout. A single remote call may slightly exceed the traversal budget.
+- A lighter 250 ms poll tracks the selection. Activation rescans and revalidates the element, app, and window; stale elements are rejected rather than blindly clicked. Selection is retained if the control remains visible after activation. Some providers return an error even after dispatching an action; ambiguous results are shown as “Action requested” and are never retried automatically.
+- An eight-command queue preserves rapid presses. App/window changes discard queued commands. Generation checks invalidate pending actions on pause, disconnect, permission loss, or mode changes.
+- Switching modes releases held mouse buttons/keys and cancels long presses. Existing launcher, touchpad, ✕, and ○ assignments remain stored. Touchpad click is reserved; ✕ and ○ regain normal assignments outside navigation mode.
+- The right stick, touchpad movement, R1 scrolling, and trigger clicks remain available as a mouse fallback.
+
+This is not universal semantic navigation: app Accessibility providers determine coverage, grouping, visibility, and action support. Custom canvases and some browser content are incomplete. Text entry, complex slider editing, virtualized lists, and automatic scrolling to off-screen controls are not implemented. No window content or discovered control labels are logged or persisted by the runtime.
+
 ### Safety and preferences
 
 Punto starts paused. Pausing, disconnecting, losing Accessibility permission, and normal application exit release held synthetic keys. Changing an assignment pauses input before opening a picker. Opening the launcher releases held clicks/shortcuts and cancels pending long presses.
@@ -113,6 +133,7 @@ Preferences use `NSUserDefaults`. Applications are stored by path and must be se
 make test
 make test-dock
 make test-launcher-ui
+make test-navigation-ui
 ```
 
 | Suite | Coverage |
@@ -125,8 +146,20 @@ make test-launcher-ui
 | `scroll` | Directions, sensitivity, bounds, fractional deltas, and cursor restoration |
 | `dock` | Showing the Dock icon with settings, closing, and reopening |
 | `launcher-ui` | Routing, automatic launching, dismissal, and overlay preview |
+| `navigation` | Direction scoring, row/column preference, boundaries, invalid rectangles, and multiple-display coordinates |
+| `navigation-ui` | Mode switching, activation/back routing, shortcut isolation, pause, and preserved assignments |
 
 UI suites require a macOS graphical session. The launcher test uses isolated volatile preferences and intercepts app launches: **it does not change assignments or open demo applications**.
+
+### Optional live Accessibility test
+
+```sh
+make test-navigation-ax
+```
+
+This builds and opens `build/NavigationAXTest.app`, signed with the local certificate and a separate bundle ID (`local.punto.navigation.fixture`). Grant **that fixture** Accessibility permission and rerun if it reports a permission failure. LaunchServices is used so macOS evaluates the fixture’s authorization rather than the invoking terminal’s. The target exits unsuccessfully if it does not obtain a PASS result.
+
+The fixture inspects and acts **only on its own window**, even if another app becomes active. It verifies real AX discovery, disabled-control exclusion, non-activating highlighting, `AXPress`, editable-field focus, canceled pending activation, and stale-window rejection. Results are written to `build/ax-test-result.txt`; fixture-only diagnostics are in the matching `.log` file. It does not load or modify Punto’s preferences.
 
 ## Manual verification
 
@@ -139,6 +172,11 @@ UI suites require a macOS graphical session. The launcher test uses isolated vol
 - [ ] Tap/hold behavior and pausing before/after the threshold.
 - [ ] Automatic launcher opening, second slot, direction changes, and timeout.
 - [ ] No normal ✕/○ shortcut while the overlay is visible.
+- [ ] Touchpad click switches launcher/navigation without running its saved assignment.
+- [ ] Navigation selects controls spatially and activates them in the intended target apps.
+- [ ] The border does not take focus, intercept clicks, or appear in the Dock.
+- [ ] App/window changes, pause, disconnect, and permission loss clear the selection.
+- [ ] Unsupported controls produce feedback rather than a coordinate click.
 - [ ] Preferences survive an application restart.
 - [ ] Canceling a picker preserves its previous assignment.
 
@@ -155,7 +193,7 @@ open build/Punto.app --args \
   --ui-preview "$PWD/build/ui-mouse.png"
 ```
 
-Available pages: `buttons`, `launcher`, `mouse`, `permissions`. `--ui-group Shoulders` filters the shoulder buttons. Omit `--ui-dark` for a light preview. These options do not change assignments.
+Available pages: `buttons`, `launcher`, `navigation`, `mouse`, `permissions`. `--ui-group Shoulders` filters the shoulder buttons. Omit `--ui-dark` for a light preview. These options do not change assignments.
 
 `make test-launcher-ui` creates `build/ui-launcher.png` with demo applications. README screenshots live in `docs/screenshots/`.
 

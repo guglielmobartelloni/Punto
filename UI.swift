@@ -10,12 +10,13 @@ private let surface = adaptive(.white, NSColor(red: 0.135, green: 0.135, blue: 0
 private let sidebarColor = adaptive(NSColor(white: 0.945, alpha: 1), NSColor(red: 0.12, green: 0.12, blue: 0.135, alpha: 1))
 
 private enum Page: String, CaseIterable, Identifiable {
-    case buttons = "Buttons", launcher = "Launcher", mouse = "Mouse", permissions = "Permissions"
+    case buttons = "Buttons", launcher = "Launcher", navigation = "Navigation", mouse = "Mouse", permissions = "Permissions"
     var id: String { rawValue }
     var icon: String {
         switch self {
         case .buttons: return "gamecontroller"
         case .launcher: return "arrow.up.and.down.and.arrow.left.and.right"
+        case .navigation: return "viewfinder"
         case .mouse: return "cursorarrow.motionlines"
         case .permissions: return "lock.shield"
         }
@@ -24,6 +25,7 @@ private enum Page: String, CaseIterable, Identifiable {
         switch self {
         case .buttons: return "Assign apps and shortcuts to your controller buttons."
         case .launcher: return "Four directions. Two apps per direction."
+        case .navigation: return "Select app controls with the D-pad, without aiming the mouse."
         case .mouse: return "Customize cursor movement and scrolling."
         case .permissions: return "Manage Punto’s access to your Mac."
         }
@@ -69,6 +71,8 @@ final class SettingsModel: ObservableObject {
     @Published var buttons: [ButtonSetting] = []
     @Published var theme = Theme.dark
     @Published var launcherApps: [[String]] = Array(repeating: ["", ""], count: 4)
+    @Published var uiNavigationEnabled = false
+    @Published var navigationStatus = "Press a direction to select a control."
     @Published var launcherVisible = false
     @Published var launcherDirection = -1
     @Published var launcherSlot = -1
@@ -96,6 +100,8 @@ final class SettingsModel: ObservableObject {
         speed = raw["speed"] as? Double ?? 1100
         deadzone = raw["deadzone"] as? Double ?? 0.12
         scrollSpeed = raw["scrollSpeed"] as? Double ?? 900
+        uiNavigationEnabled = raw["uiNavigation"] as? Bool ?? false
+        navigationStatus = raw["navigationStatus"] as? String ?? "Press a direction to select a control."
         launcherVisible = raw["launcherVisible"] as? Bool ?? false
         launcherDirection = raw["launcherDirection"] as? Int ?? -1
         launcherSlot = raw["launcherSlot"] as? Int ?? -1
@@ -163,7 +169,7 @@ private struct SettingsView: View {
         self.model = model
         let args = CommandLine.arguments
         if let index = args.firstIndex(of: "--ui-page"), index + 1 < args.count {
-            let pages: [String: Page] = ["mouse": .mouse, "buttons": .buttons, "launcher": .launcher, "permissions": .permissions]
+            let pages: [String: Page] = ["mouse": .mouse, "buttons": .buttons, "launcher": .launcher, "navigation": .navigation, "permissions": .permissions]
             _page = State(initialValue: pages[args[index + 1]] ?? .buttons)
         }
         if let index = args.firstIndex(of: "--ui-group"), index + 1 < args.count {
@@ -184,6 +190,7 @@ private struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 20) {
                             if page == .mouse { mouseSettings }
                             else if page == .launcher { launcherSettings }
+                            else if page == .navigation { navigationSettings }
                             else { permissions }
                         }.padding(24).frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -315,7 +322,7 @@ private struct SettingsView: View {
             Divider()
             HStack(spacing: 8) {
                 Image(systemName: "info.circle").foregroundColor(.secondary)
-                Text("D-pad → Launcher · Options → enable / pause · Changes saved automatically")
+                Text("D-pad → Launcher / Navigation · Touchpad click → switch mode · Options → enable / pause")
                     .font(.system(size: 10)).foregroundColor(.secondary)
                 Spacer(minLength: 0)
                 Button { showHelp.toggle() } label: { Image(systemName: "questionmark.circle").foregroundColor(.secondary) }.buttonStyle(.plain)
@@ -338,15 +345,15 @@ private struct SettingsView: View {
         }
     }
     @ViewBuilder private func buttonRow(_ setting: ButtonSetting) -> some View {
-        if setting.id == 5 {
+        if setting.id == 5 || setting.id == 13 || (model.uiNavigationEnabled && (setting.id == 1 || setting.id == 2)) {
             HStack(spacing: 12) {
                 HStack(spacing: 9) {
-                    Text("R1").font(.system(size: 11, weight: .medium)).foregroundColor(.secondary)
+                    Text(setting.glyph).font(.system(size: 11, weight: .medium)).foregroundColor(.secondary)
                         .frame(width: 28, height: 28).background(Color.primary.opacity(0.035)).cornerRadius(6)
                     Text(setting.name).font(.system(size: 11, weight: .medium))
                 }.frame(width: 180, alignment: .leading)
-                Label("Right stick → scroll", systemImage: "arrow.up.arrow.down").font(.system(size: 11)).frame(maxWidth: .infinity, alignment: .leading)
-                Text("Hold R1").font(.system(size: 11)).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .leading)
+                Label(setting.primary, systemImage: setting.id == 5 ? "arrow.up.arrow.down" : setting.id == 2 ? "arrow.uturn.backward" : "viewfinder").font(.system(size: 11)).frame(maxWidth: .infinity, alignment: .leading)
+                Text(setting.id == 5 ? "Hold R1" : setting.id == 13 ? "Reserved" : "Navigation mode").font(.system(size: 11)).foregroundColor(.secondary).frame(maxWidth: .infinity, alignment: .leading)
             }.padding(.horizontal, 14).padding(.vertical, 11)
         } else {
         HStack(spacing: 12) {
@@ -430,6 +437,32 @@ private struct SettingsView: View {
             }
             Text("Controller input must be enabled. The overlay disappears after 1.2 seconds. Directions open apps; ✕ and ○ do not run their normal shortcuts while it is visible. Previous D-pad assignments remain stored; previously assigned apps are migrated to slot 1.")
                 .font(.system(size: 10)).foregroundColor(.secondary).lineSpacing(3)
+        }
+    }
+    private var navigationSettings: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            heading("D-pad behavior", detail: "Click the touchpad to switch modes while controller input is enabled.")
+            VStack(alignment: .leading, spacing: 12) {
+                Picker("Mode", selection: Binding(get: { model.uiNavigationEnabled }, set: { model.controller.setUINavigationEnabled($0); model.refresh() })) {
+                    Text("App launcher").tag(false)
+                    Text("UI navigation").tag(true)
+                }.pickerStyle(.segmented)
+                Label(model.uiNavigationEnabled ? model.navigationStatus : "Directions open your assigned apps.", systemImage: model.uiNavigationEnabled ? "viewfinder" : "arrow.up.and.down.and.arrow.left.and.right")
+                    .font(.system(size: 12)).foregroundColor(.secondary).lineLimit(3)
+            }.padding(16).card()
+            heading("Navigate the active window", detail: "Uses macOS Accessibility. No cursor movement or coordinate clicks.")
+            VStack(alignment: .leading, spacing: 14) {
+                instruction("arrow.up.and.down.and.arrow.left.and.right", title: "D-pad selects controls", detail: "The first press selects the focused or first available control. Further presses select the nearest control in that direction. A coral border shows your selection.")
+                Divider()
+                instruction("xmark.circle", title: "✕ activates the selection", detail: "Press a button, select a tab, or focus an editable field using its native Accessibility action.")
+                Divider()
+                instruction("arrow.uturn.backward", title: "○ goes back", detail: "Requests the native Cancel action, or sends Escape if the app does not support it.")
+            }.padding(16).card()
+            heading("Compatibility", detail: "Experimental: apps must expose their controls through Accessibility.")
+            Text("Only visible, enabled controls in the active window, sheet, or focused menu are considered. Custom canvases and some web content may not expose enough information. The right stick, touchpad, and triggers remain available as a mouse fallback. Text entry and detailed slider editing still require the keyboard or mouse.")
+                .font(.system(size: 12)).foregroundColor(.secondary)
+            Text("Launcher assignments and existing shortcuts are preserved. ✕ and ○ use navigation actions only in this mode; touchpad click is reserved for switching modes. Pausing or disconnecting clears the selection.")
+                .font(.system(size: 11)).foregroundColor(.secondary)
         }
     }
     private var mouseSettings: some View {

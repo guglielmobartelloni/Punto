@@ -5,6 +5,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setMouseSpeed:(double)speed deadzone:(double)deadzone;
 - (void)setScrollSpeed:(double)speed;
 - (void)toggleControl;
+- (void)setUINavigationEnabled:(BOOL)enabled;
 - (void)openAccessibility;
 - (void)assignAction:(NSInteger)action forButton:(NSInteger)index;
 - (void)recordHoldForButton:(NSInteger)index;
