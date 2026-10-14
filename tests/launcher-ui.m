@@ -34,7 +34,7 @@ int main(void){@autoreleasepool{
     assert(application.activationPolicy==NSApplicationActivationPolicyAccessory);
     assert(!delegate.launcherPanel.isKeyWindow);
     assert(delegate.launcherPanel.isVisible); // Overlay alone must not add a Dock icon.
-    assert(delegate.launcherPanel.contentView.bounds.size.width<=304);
+    assert(delegate.launcherPanel.contentView.bounds.size.width<=368);
     assert(delegate.launcherPanel.contentView.bounds.size.height<=368);
     assert([delegate handleButton:15 pressed:NO]);
     [delegate handleButton:15 pressed:YES];
@@ -61,6 +61,8 @@ int main(void){@autoreleasepool{
     NSView *view=delegate.launcherPanel.contentView;[view layoutSubtreeIfNeeded];
     NSBitmapImageRep *bitmap=[view bitmapImageRepForCachingDisplayInRect:view.bounds];
     [view cacheDisplayInRect:view.bounds toBitmapImageRep:bitmap];
+    assert([bitmap colorAtX:bitmap.pixelsWide/2 y:bitmap.pixelsHigh/2].alphaComponent<0.01);
+    assert([bitmap colorAtX:0 y:0].alphaComponent<0.01);
     NSData *png=[bitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
     assert([png writeToFile:@"build/ui-launcher.png" atomically:YES]);
     [delegate hideLauncher];input_stop();input_button_handler(NULL);currentApp=nil;

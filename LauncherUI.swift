@@ -9,19 +9,15 @@ struct PuntoLauncherView: View {
     var body: some View {
         VStack(spacing: 6) {
             direction(0)
-            HStack(spacing: 12) {
+            HStack(spacing: 0) {
                 direction(3)
+                Color.clear.frame(width: 76, height: 64).accessibilityHidden(true)
                 direction(1)
             }
             direction(2)
         }
         .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background {
-            RoundedRectangle(cornerRadius: 14).fill(.ultraThinMaterial)
-            RoundedRectangle(cornerRadius: 14).fill(Color.black.opacity(0.40))
-            RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1)
-        }
         .foregroundColor(.white).preferredColorScheme(.dark)
         .animation(.easeOut(duration: 0.12), value: model.launcherDirection)
         .animation(.easeOut(duration: 0.12), value: model.launcherSlot)
@@ -56,7 +52,9 @@ struct PuntoLauncherView: View {
                         .frame(maxWidth: .infinity).padding(.horizontal, 4)
                 }
                 .frame(width: 64, height: 64)
-                .background(selected ? coral.opacity(0.16) : .white.opacity(0.04))
+                .background(.ultraThinMaterial)
+                .background(Color.black.opacity(0.40))
+                .overlay(RoundedRectangle(cornerRadius: 9).fill(selected ? coral.opacity(0.16) : .white.opacity(0.04)).allowsHitTesting(false))
                 .clipShape(RoundedRectangle(cornerRadius: 9))
                 .overlay(RoundedRectangle(cornerRadius: 9).stroke(selected ? coral : .white.opacity(0.09), lineWidth: selected ? 1.5 : 1))
                 .accessibilityElement(children: .ignore)
