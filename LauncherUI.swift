@@ -39,8 +39,12 @@ struct PuntoLauncherView: View {
         Group {
             // Slot 1 is nearest the center; slot 2 extends outward.
             ForEach(index == 0 || index == 3 ? [1, 0] : [0, 1], id: \.self) { slot in
-                let selected = model.launcherDirection == index && model.launcherSlot == slot
-                tile(index, slot: slot, selected: selected, now: now)
+                if model.launcherApps[index][slot].isEmpty {
+                    Color.clear.frame(width: 64, height: 64).accessibilityHidden(true)
+                } else {
+                    let selected = model.launcherDirection == index && model.launcherSlot == slot
+                    tile(index, slot: slot, selected: selected, now: now)
+                }
             }
         }
     }

@@ -43,7 +43,7 @@ A **native SwiftUI interface**, dark/light/system themes, and automatically save
 
 ### An app launcher that feels like a HUD
 
-Press a direction to select an app. It opens **0.5 seconds after the last selection**; changing selection restarts the delay, and **○ cancels** a pending launch. A compact **368 × 368-point** overlay shows app tiles in a cross around an empty center, with transparent space between the arms. The selected tile gives one gentle pulse when opening starts, without a countdown border. Press the same direction again while it is visible to switch to the second app. From the outer app, the opposite direction first returns to the inner app; another press crosses to the opposite side. It disappears after **1.2 seconds**—no confirmation button required.
+Press a direction to select an app. It opens **0.5 seconds after the last selection**; changing selection restarts the delay, and **○ cancels** a pending launch. A compact **368 × 368-point** overlay shows app tiles in a cross around an empty center, with transparent space between the arms. Unassigned tiles are hidden, leaving their positions empty. The selected tile gives one gentle pulse when opening starts, without a countdown border. Press the same direction again while it is visible to switch to the second app. From the outer app, the opposite direction first returns to the inner app; another press crosses to the opposite side. It disappears after **1.2 seconds**—no confirmation button required.
 
 <p align="center">
   <img src="docs/screenshots/launcher-overlay.png" width="400" alt="Punto’s compact overlay with two apps in each of four directions">

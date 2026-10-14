@@ -113,6 +113,15 @@ int main(void){@autoreleasepool{
     NSData *settledPNG=[settledBitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}];
     assert(![pulsePNG isEqual:settledPNG]); // Pulse must advance without any selection change.
     assert([settledPNG writeToFile:@"build/ui-launcher-settled.png" atomically:YES]);
+    NSMutableDictionary *sparse=[[defaults volatileDomainForName:NSArgumentDomain] mutableCopy];
+    sparse[@"launcherApps0"]=@[@"",@""];
+    [defaults setVolatileDomain:sparse forName:NSArgumentDomain];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+    [view layoutSubtreeIfNeeded];
+    NSBitmapImageRep *emptyBitmap=[view bitmapImageRepForCachingDisplayInRect:view.bounds];
+    [view cacheDisplayInRect:view.bounds toBitmapImageRep:emptyBitmap];
+    assert([emptyBitmap colorAtX:emptyBitmap.pixelsWide/2 y:emptyBitmap.pixelsHigh*44/368].alphaComponent<0.01);
+    assert([emptyBitmap colorAtX:emptyBitmap.pixelsWide/2 y:emptyBitmap.pixelsHigh*114/368].alphaComponent<0.01);
     [delegate hideLauncher];input_stop();input_button_handler(NULL);currentApp=nil;
     [defaults setVolatileDomain:original?:@{} forName:NSArgumentDomain];
     puts("PASS: delayed latest-selection launch, deadline reset, one-shot launch/pulse timestamps, cancellation feedback reset, cancel/pause/permission/mode-change safety, compact tiles-only layout, no focus or Dock activation");
